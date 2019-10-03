@@ -7,12 +7,20 @@ const session = require('express-session');
 const Keycloak = require('keycloak-connect');
 const request = require('request');
 
-// Instantiate Keycloak
-const keycloakConfig = require('./config/keycloak.config.json');
+// Config file
+const config = require('./config/server.config.json');
 
-const memoryStore = new session.MemoryStore();
-const keycloak = new Keycloak({ store: memoryStore }, keycloakConfig);
+// get the environment and the current API version
+const env = process.env.NODE_ENV || 'development';
+const version = config.server.version || 1;
 
+// Instantiate Keycloak if in production environment
+if (env === 'production') {
+  const keycloakConfig = require('./config/keycloak.config.json');
+
+  const memoryStore = new session.MemoryStore();
+  const keycloak = new Keycloak({ store: memoryStore }, keycloakConfig);
+}
 
 // Import routes
 const index = require('./routes/index.controller');
@@ -22,21 +30,17 @@ const series = require('./routes/series.controller');
 const commands = require('./routes/commands.controller');
 const categories = require('./routes/categories.controller');
 
-// Config file
-const config = require('./config/server.config.json');
-
-const env = process.env.NODE_ENV || 'development';
-const version = config.server.version || 1;
-
 const app = express();
 
-// session
-app.use(session({
-  secret: config.secretKey,
-  resave: false,
-  saveUninitialized: true,
-  store: memoryStore,
-}));
+// session in production environment
+if (env === 'production') {
+  app.use(session({
+    secret: config.secretKey,
+    resave: false,
+    saveUninitialized: true,
+    store: memoryStore,
+  }));
+}
 
 const router = express.Router();
 
@@ -46,10 +50,12 @@ app.set('view engine', 'pug');
 
 // uncomment after placing your favicon in /public
 // app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(keycloak.middleware({
-  logout: 'logout',
-  admin: '/',
-}));
+if (env === 'production') {
+  app.use(keycloak.middleware({
+    logout: 'logout',
+    admin: '/',
+  }));
+}
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -63,8 +69,10 @@ app.use((req, res, next) => {
   next();
 });
 
-const keycloakHost = keycloakConfig.host;
-const realmName = keycloakConfig.realm;
+if (env === 'production') {
+  const keycloakHost = keycloakConfig.host;
+  const realmName = keycloakConfig.realm;
+}
 
 app.use((req, res, next) => {
   // Bypass authentication on dev environment
