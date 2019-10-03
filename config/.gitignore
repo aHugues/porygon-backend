@@ -1,2 +1,2 @@
-database.config.json
-keycloak.config.json
+*
+!server.config.json
