@@ -1,0 +1,33 @@
+{
+  "name": "porygon-backend",
+  "version": "1.0.0",
+  "description": "REST API for the Porygon website",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www",
+    "test": "node ./bin/www"
+  },
+  "dependencies": {
+    "acorn": "^6.2.0",
+    "async": "^3.1.0",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "~1.4.3",
+    "db-migrate": "^0.11.6",
+    "db-migrate-mysql": "^1.1.10",
+    "debug": "~2.6.3",
+    "express": "^4.17.1",
+    "express-session": "^1.16.2",
+    "keycloak-connect": "^6.0.1",
+    "knex": "^0.19.0",
+    "morgan": "^1.9.1",
+    "pug": "^2.0.4",
+    "request": "^2.88.0",
+    "rxjs": "^5.5.12",
+    "serve-favicon": "^2.5.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-plugin-import": "^2.18.1"
+  }
+}
