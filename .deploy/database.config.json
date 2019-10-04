@@ -1,0 +1,10 @@
+{
+    "test": {
+        "client": "mysql",
+        "driver": "mysql",
+        "password": "porygon_test", 
+        "host": "localhost",
+        "database": "porygon_test",
+        "user": "porygon_test"
+    }
+}
