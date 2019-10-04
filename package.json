@@ -39,6 +39,17 @@
     "testEnvironment": "node",
     "coveragePathIgnorePatterns": [
       "/node_modules/"
+    ],
+    "collectCoverage": true,
+    "collectCoverageFrom": [
+      "<rootDir>/app.js",
+      "<rootDir>/middlewares/**/*.js",
+      "<rootDir>/routes/**/*.js",
+      "<rootDir>/services/**/*.js"
+    ],
+    "coverageReporters": [
+      "lcov",
+      "text-summary"
     ]
   }
 }
