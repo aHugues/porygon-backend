@@ -76,7 +76,7 @@ if (env === 'production') {
 
 app.use((req, res, next) => {
   // Bypass authentication on dev environment
-  if (env === 'development') {
+  if (env !== 'production') {
     next();
   } else if (req.method === 'OPTIONS') {
     next();
