@@ -18,6 +18,7 @@ install:
   - npm install -g db-migrate
 
 script:
+  - mysql -u travis -e 'CREATE DATABASE porygonTest'
   - db-migrate db:create --config config/database.config.json --env test porygonTest
   - db-migrate --config config/database.config.json --env test up
   - npm run test
