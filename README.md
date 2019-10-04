@@ -1,5 +1,8 @@
 # Backend REST API #
 
+[![Build Status](https://travis-ci.org/aHugues/porygon-backend.svg?branch=master)](https://travis-ci.org/aHugues/porygon-backend)
+[![codecov](https://codecov.io/gh/aHugues/porygon-backend/branch/master/graph/badge.svg)](https://codecov.io/gh/aHugues/porygon-backend)
+
 This is a RESTful API realised with Express.JS to provide routes for the frontend application to access the data.
 
 Currently it is linked to a MySQL database through Sequelize.
