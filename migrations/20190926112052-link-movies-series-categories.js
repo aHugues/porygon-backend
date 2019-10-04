@@ -39,6 +39,8 @@ exports.up = function (db, callback) {
 
 exports.down = function (db, callback) {
   async.series([
+    db.removeForeignKey.bind(db, 'Movie', 'movie_category_fk'),
+    db.removeForeignKey.bind(db, 'Serie', 'serie_category_fk'),
     db.removeColumn.bind(db, 'Movie', 'category_id'),
     db.removeColumn.bind(db, 'Serie', 'category_id'),
   ], callback);
