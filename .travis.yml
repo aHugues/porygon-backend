@@ -15,8 +15,11 @@ before_install:
 install:
   - npm install
   - npm install -g codecov
+  - npm install -g db-migrate
 
 script:
+  - db-migrate db:create --config config/database.config.json --env test porygonTest
+  - db-migrate --config config/database.config.json --env test up
   - npm run test
 
 after_success:
