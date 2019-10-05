@@ -7,7 +7,8 @@
     "start": "node ./bin/www",
     "migrate:test": "db-migrate --config config/database.config.json --env test up",
     "migrate:reset": "db-migrate --config config/database.config.json --env test reset",
-    "pretest": "npm run migrate:reset && npm run migrate:test",
+    "migrate:init": "mysql -u travis porygonTest < .deploy/populateDatabase.sql",
+    "pretest": "npm run migrate:reset && npm run migrate:test && npm run migrate:init",
     "test": "NODE_ENV=test jest --detectOpenHandles --testTimeout=10000"
   },
   "dependencies": {
