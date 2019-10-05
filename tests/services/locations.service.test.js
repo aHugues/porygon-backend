@@ -106,3 +106,32 @@ describe('getAllLocations', () => {
     );
   });
 });
+
+describe('getLocationById', () => {
+  it('is an observable', () => {
+    expect(locationsService.getLocationById(1).subscribe).toBeDefined();
+  });
+
+  it('correctly returns the expected location', (done) => {
+    locationsService.getLocationById(1).subscribe(
+      (result) => {
+        expect(result[0].id).toBe(1);
+        expect(result[0].location).toBe('test location 1');
+        expect(result[0].is_physical).toBe(1);
+        done();
+      },
+      (error) => expect(error).not.toBeDefined(),
+      () => done(),
+    );
+  });
+
+  it('correctly catches error when unknown location', (done) => {
+    locationsService.getLocationById(3).subscribe(
+      (result) => expect(result).not.toBeDefined(),
+      (error) => {
+        expect(error.message).toContain('Location with id 3 not found.');
+        done();
+      },
+    );
+  });
+});
