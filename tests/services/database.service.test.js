@@ -13,5 +13,6 @@ describe('Database service', () => {
   it('successfully connects to the database', async () => {
     const result = await databaseService('migrations').select();
     expect(result.length).toBeGreaterThan(0);
+    databaseService.destroy();
   });
 });

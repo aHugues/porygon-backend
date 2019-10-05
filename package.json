@@ -8,7 +8,7 @@
     "migrate:test": "db-migrate --config config/database.config.json --env test up",
     "migrate:reset": "db-migrate --config config/database.config.json --env test reset",
     "pretest": "npm run migrate:reset && npm run migrate:test",
-    "test": "NODE_ENV=test jest"
+    "test": "NODE_ENV=test jest --detectOpenHandles --testTimeout=10000"
   },
   "dependencies": {
     "acorn": "^6.2.0",
