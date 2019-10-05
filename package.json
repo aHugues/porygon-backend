@@ -49,7 +49,7 @@
     ],
     "coverageReporters": [
       "lcov",
-      "text-summary"
+      "text"
     ]
   }
 }
