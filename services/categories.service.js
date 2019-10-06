@@ -14,8 +14,8 @@ const getAllCategories = (query) => {
 
   let labelSearch = '%';
   // Gets the search parameters, replaces with '%' if none provided
-  if (query.category) {
-    labelSearch = `%${query.category}%`;
+  if (query.label) {
+    labelSearch = `%${query.label}%`;
   }
 
   // Gets the sorting parameters
