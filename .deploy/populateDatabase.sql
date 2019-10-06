@@ -3,5 +3,5 @@ VALUES  ('test location 1', 1),
         ('test location 2', 0);
 
 INSERT INTO Category(label, description)
-VALUES  ('test category 1', 'this is a first test category.'),
-        ('test category 2', 'this is a second test category.');
+VALUES  ('test category 1', '2- this is a first test category.'),
+        ('test category 2', '1- this is also a test category.');
