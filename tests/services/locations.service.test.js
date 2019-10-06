@@ -135,3 +135,166 @@ describe('getLocationById', () => {
     );
   });
 });
+
+describe('createLocation', () => {
+  afterAll(async (done) => {
+    await knex('Location').where('id', 3).delete();
+    done();
+  });
+
+  it('is an observable', () => {
+    expect(locationsService.createLocation().subscribe).toBeDefined();
+  });
+
+  it('completes when correct values are passed', (done) => {
+    const newLocation = {
+      location: 'test new location',
+      is_physical: true,
+    };
+    locationsService.createLocation(newLocation).subscribe(
+      (result) => {
+        expect(result.length).toBe(1);
+        expect(result[0]).toBe(3);
+      },
+      (error) => expect(error).not.toBeDefined(),
+      () => done(),
+    );
+  });
+
+  it('fails when invalid values are passed', (done) => {
+    const wrongLocation = {
+      wrongField: true,
+    };
+    locationsService.createLocation(wrongLocation).subscribe(
+      (result) => expect(result).not.toBeDefined(),
+      (error) => {
+        expect(typeof error).toBe('object');
+        expect(error.name).toBe('Error');
+        expect(error.message).toContain('ER_BAD_FIELD_ERROR');
+        done();
+      },
+    );
+  });
+});
+
+describe('updateLocation', () => {
+  beforeAll(async (done) => {
+    const sampleLocation = {
+      location: 'test new location',
+      is_physical: true,
+    };
+    await knex('Location').insert([sampleLocation]);
+    done();
+  });
+  afterAll(async (done) => {
+    await knex('Location').where('id', 4).delete();
+    done();
+  });
+
+  it('is an observable', () => {
+    expect(locationsService.updateLocation().subscribe).toBeDefined();
+  });
+
+  it('completes when correct values are passed', (done) => {
+    const updatedLocation = {
+      location: 'updated new location',
+    };
+    locationsService.updateLocation(4, updatedLocation).subscribe(
+      (result) => expect(result).toBe(true),
+      (error) => expect(error).not.toBeDefined(),
+      () => done(),
+    );
+  });
+
+  it('has correctly updated the values', (done) => {
+    knex('Location').where('id', 4).select()
+      .then((result) => {
+        expect(result.length).toBe(1);
+        expect(result[0].id).toBe(4);
+        expect(result[0].location).toBe('updated new location');
+        expect(result[0].is_physical).toBe(1);
+        done();
+      });
+  });
+
+  it('knows when id has not been found', (done) => {
+    const updatedLocation = {
+      location: 'updated new location',
+    };
+    locationsService.updateLocation(5, updatedLocation).subscribe(
+      (result) => expect(result).toBe(false),
+      (error) => expect(error).not.toBeDefined(),
+      () => done(),
+    );
+  });
+
+  it('fails when invalid values are passed', (done) => {
+    const wrongLocation = {
+      wrongField: true,
+    };
+    locationsService.updateLocation(4, wrongLocation).subscribe(
+      (result) => expect(result).not.toBeDefined(),
+      (error) => {
+        expect(typeof error).toBe('object');
+        expect(error.name).toBe('Error');
+        expect(error.message).toContain('ER_BAD_FIELD_ERROR');
+        done();
+      },
+    );
+  });
+});
+
+describe('deleteLocation', () => {
+  beforeAll(async (done) => {
+    const sampleLocation = {
+      location: 'test new location',
+      is_physical: true,
+    };
+    await knex('Location').insert([sampleLocation]);
+    done();
+  });
+  afterAll(async (done) => {
+    await knex('Location').where('id', 5).delete();
+    done();
+  });
+
+  it('is an observable', () => {
+    expect(locationsService.deleteLocation().subscribe).toBeDefined();
+  });
+
+  it('has the expected data', (done) => {
+    knex('Location').where('id', 5).select()
+      .then((result) => {
+        expect(result.length).toBe(1);
+        done();
+      });
+  });
+
+  it('completes when correct values are passed', (done) => {
+    locationsService.deleteLocation(5).subscribe(
+      () => {},
+      (error) => expect(error).not.toBeDefined(),
+      () => done(),
+    );
+  });
+
+  it('has correctly deleted the element', (done) => {
+    knex('Location').where('id', 5).select()
+      .then((result) => {
+        expect(result.length).toBe(0);
+        done();
+      });
+  });
+
+  it('fails when no values are passed', (done) => {
+    locationsService.deleteLocation().subscribe(
+      (result) => expect(result).not.toBeDefined(),
+      (error) => {
+        expect(typeof error).toBe('object');
+        expect(error.name).toBe('Error');
+        expect(error.message).toContain('Undefined binding(s) detected');
+        done();
+      },
+    );
+  });
+});
