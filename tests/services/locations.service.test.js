@@ -298,3 +298,35 @@ describe('deleteLocation', () => {
     );
   });
 });
+
+describe('countForLocation', () => {
+  it('is an observable', () => {
+    expect(locationsService.countForLocation().subscribe).toBeDefined();
+  });
+
+  it('does not fail on unknown location', (done) => {
+    locationsService.countForLocation(-1).subscribe(
+      (result) => {
+        expect(result[1]).toBe(0);
+        expect(['movies', 'series']).toContain(result[0]);
+      },
+      (error) => expect(error).not.toBeDefined(),
+      () => done(),
+    );
+  });
+
+  it('correctly counts on known location', (done) => {
+    locationsService.countForLocation(1).subscribe(
+      (result) => {
+        expect(['movies', 'series']).toContain(result[0]);
+        if (result[0] === 'movies') {
+          expect(result[1]).toBe(2);
+        } else {
+          expect(result[1]).toBe(0);
+        }
+      },
+      (error) => expect(error).not.toBeDefined(),
+      () => done(),
+    );
+  });
+});
