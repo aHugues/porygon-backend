@@ -13,13 +13,16 @@ const config = require('./config/server.config.json');
 // get the environment and the current API version
 const env = process.env.NODE_ENV || 'development';
 const version = config.server.version || 1;
+let memoryStore = {};
+let keycloak = {};
+let keycloakConfig = {};
 
 // Instantiate Keycloak if in production environment
 if (env === 'production') {
-  const keycloakConfig = require('./config/keycloak.config.json');
+  keycloakConfig = require('./config/keycloak.config.json');
 
-  const memoryStore = new session.MemoryStore();
-  const keycloak = new Keycloak({ store: memoryStore }, keycloakConfig);
+  memoryStore = new session.MemoryStore();
+  keycloak = new Keycloak({ store: memoryStore }, keycloakConfig);
 }
 
 // Import routes
@@ -68,9 +71,12 @@ app.use((req, res, next) => {
   next();
 });
 
+let keycloakHost = '';
+let realmName = '';
+
 if (env === 'production') {
-  const keycloakHost = keycloakConfig.host;
-  const realmName = keycloakConfig.realm;
+  keycloakHost = keycloakConfig.host;
+  realmName = keycloakConfig.realm;
 }
 
 app.use((req, res, next) => {
