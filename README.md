@@ -115,3 +115,9 @@ Launch the application with `npm start`.
 The functions are accessible with `http://your_host:4000/api/v1...`. Of course the port can be adjusted using `./config/server.config.json` to use what you need.
 
 You can use the provided documentation for notes concerning the server usage.
+
+### Docker
+
+Launch the Docker container using 
+
+`docker run --network="host" -e NODE_ENV=production -v "$(pwd)/config":/config ahugues/porygon-backend`
