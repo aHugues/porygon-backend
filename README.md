@@ -3,37 +3,17 @@
 [![Build Status](https://travis-ci.org/aHugues/porygon-backend.svg?branch=master)](https://travis-ci.org/aHugues/porygon-backend)
 [![codecov](https://codecov.io/gh/aHugues/porygon-backend/branch/master/graph/badge.svg)](https://codecov.io/gh/aHugues/porygon-backend)
 
-This is a RESTful API realised with Express.JS to provide routes for the frontend application to access the data.
-
-Currently it is linked to a MySQL database through Sequelize.
+REST API Using Express to link the Porygon application to a SQL database with authentication using 
+a Keycloak server.
 
 ## Installation ##
 
 ### Prerequesites ###
 
-You need **Node.JS** (version 6 or later) and **MySQL** to install the application.
+You need **Node.JS** (version 8 or later) and **MySQL** to install the application.
 
-There is no OS limitation (although I would advice against using Windows for your sanity...)
 
 ### Installation Procedure ###
-
-#### Installing the database ####
-
-Procedure to install the database.
-
-##### MacOS #####
-
-You can use a package manager like brew, but I've always had problem with this version so use the version downloaded on the **MySQL** website and follow the instruction.
-
-##### Linux #####
-
-Use your favourite package manager depending on your distribution, for **Ubuntu**, it would be something like `sudo apt install mysql`
-
-##### Windows #####
-
-Pray.
-
-Or use the installation wizard and hope it works on the first time. Not guaranteed.
 
 #### Creating the database to be accessed ####
 
@@ -69,10 +49,19 @@ Run the migrations:
 db-migrate --config config/database.config.json -e production up
 ```
 
+Or for a dev environment, replace `production` by `development` and run 
+
+```shell
+db-migrate --config config/database.config.json up
+```
+
 ### Configure the authentication
 
 The application uses Keycloak for IAM and authentication. To link to your server, 
 download the JSON OpenID file and put it into the config folder: 
+
+>Note: This step is not required if running in a development environment as authentication
+is automatically bypassed. 
 
 ```json
 keycloak.config.json
@@ -103,21 +92,33 @@ openssl rand -base64 32
 Replace the `secretKey` field in the `./config/server.config.json` file. 
 
 
-
 #### Installing the application ####
 
-Go to your backend folder and install the application `npm install`
+Go to the root folder and install the application `npm install`
 
 ## Usage ##
+
+### Running the application
 
 Launch the application with `npm start`.
 
 The functions are accessible with `http://your_host:4000/api/v1...`. Of course the port can be adjusted using `./config/server.config.json` to use what you need.
 
-You can use the provided documentation for notes concerning the server usage.
+### Deployment to production
+
+The environment can be set using `NODE_ENV=production npm start`. However, it is 
+advised to use a proper process manager when running in production, such as `pm2`. 
+
 
 ### Docker
 
-Launch the Docker container using 
+A Docker container is available at `ahugues/porygon-backend`. It uses a volume called `/config` to 
+set the database and optionnal keycloak config files. 
 
-`docker run --network="host" -e NODE_ENV=production -v "$(pwd)/config":/config ahugues/porygon-backend`
+If necessary to access the database, the host networking can be used with the flag `--network="host"`.
+
+Launch the Docker container using:
+
+```shell
+docker run --network="host" -e NODE_ENV=production -v "$(pwd)/config":/config ahugues/porygon-backend
+```
