@@ -322,7 +322,7 @@ describe('countForLocation', () => {
         if (result[0] === 'movies') {
           expect(result[1]).toBe(2);
         } else {
-          expect(result[1]).toBe(0);
+          expect(result[1]).toBe(2);
         }
       },
       (error) => expect(error).not.toBeDefined(),
