@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session');
 const Keycloak = require('keycloak-connect');
 const request = require('request');
+const MySQLSessionStore = require('express-mysql-session')(session);
 
 // Config file
 const config = require('./config/server.config.json');
@@ -13,16 +14,21 @@ const config = require('./config/server.config.json');
 // get the environment and the current API version
 const env = process.env.NODE_ENV || 'development';
 const version = config.server.version || 1;
-let memoryStore = {};
 let keycloak = {};
 let keycloakConfig = {};
+let mySQLConfig = {};
+let sessionStore = {};
+
+// setup store in production environment
+if (env === 'production') {
+  mySQLConfig = require('./config/database.config.json')[env];
+  sessionStore = new MySQLSessionStore(mySQLConfig);
+}
 
 // Instantiate Keycloak if in production environment
 if (env === 'production') {
   keycloakConfig = require('./config/keycloak.config.json');
-
-  memoryStore = new session.MemoryStore();
-  keycloak = new Keycloak({ store: memoryStore }, keycloakConfig);
+  keycloak = new Keycloak({ store: session }, keycloakConfig);
 }
 
 // Import routes
@@ -40,7 +46,7 @@ if (env === 'production') {
     secret: config.secretKey,
     resave: false,
     saveUninitialized: true,
-    store: memoryStore,
+    store: sessionStore,
   }));
 }
 
