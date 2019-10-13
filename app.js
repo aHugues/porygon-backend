@@ -21,13 +21,13 @@ let sessionStore = {};
 
 // setup store in production environment
 if (env === 'production') {
-  mySQLConfig = require('./config/database.config.json')[env];
+  mySQLConfig = require('./config/database.config.json')[env]; // eslint-disable-line global-require
   sessionStore = new MySQLSessionStore(mySQLConfig);
 }
 
 // Instantiate Keycloak if in production environment
 if (env === 'production') {
-  keycloakConfig = require('./config/keycloak.config.json');
+  keycloakConfig = require('./config/keycloak.config.json'); // eslint-disable-line global-require
   keycloak = new Keycloak({ store: session }, keycloakConfig);
 }
 
