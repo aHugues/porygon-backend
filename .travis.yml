@@ -1,15 +1,22 @@
 language: node_js
+
 services: 
   - mysql
+  - docker
+
 dist: bionic
+
 node_js:
   - 10
   - 12
+
 cache:
   directories:
     - node_modules
 
 before_install:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - if [[ $TRAVIS_NODE_VERSION == 10 ]]; then docker build -t ahugues/porygon-backend .; fi
   - cp .deploy/database.config.json config/database.config.json
   
 install:
@@ -25,3 +32,10 @@ script:
 
 after_success:
   - if [[ $TRAVIS_NODE_VERSION == 10 ]]; then codecov; fi
+
+deploy:
+  - provider: script
+    script: bash docker_push
+    on:
+      branch: master
+      node: 10
