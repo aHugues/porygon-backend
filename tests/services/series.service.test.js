@@ -1,22 +1,22 @@
 const knex = require('../../services/database.service');
-const moviesService = require('../../services/movies.service');
+const seriesService = require('../../services/series.service');
 
 // prevent connection hanging at the end of execution
 afterAll(() => knex.destroy());
 
-describe('getAllMovies', () => {
+describe('getAllSeries', () => {
   it('is an observable', () => {
     const baseQuery = {
       attributes: '',
     };
-    expect(moviesService.getAllMovies(baseQuery).subscribe).toBeDefined();
+    expect(seriesService.getAllSeries(baseQuery).subscribe).toBeDefined();
   });
 
   it('gets the expected elements from the database', (done) => {
     const baseQuery = {
       attributes: '',
     };
-    moviesService.getAllMovies(baseQuery).subscribe(
+    seriesService.getAllSeries(baseQuery).subscribe(
       (result) => {
         expect(result.length).toBe(3);
       },
@@ -27,17 +27,17 @@ describe('getAllMovies', () => {
 
   it('selects the required fields as expected', (done) => {
     const filterQuery = {
-      attributes: 'title,Movie.id',
+      attributes: 'title,Serie.id',
     };
-    moviesService.getAllMovies(filterQuery).subscribe(
+    seriesService.getAllSeries(filterQuery).subscribe(
       (result) => {
         expect(result.length).toBe(3);
-        result.forEach((movie) => {
-          expect(movie.Movie.title).toBeDefined();
-          expect(movie.Movie.id).toBeDefined();
-          expect(movie.Movie.remarks).not.toBeDefined();
-          expect(movie.Movie.director).not.toBeDefined();
-          expect(movie.Movie.category_id).not.toBeDefined();
+        result.forEach((serie) => {
+          expect(serie.Serie.title).toBeDefined();
+          expect(serie.Serie.id).toBeDefined();
+          expect(serie.Serie.remarks).not.toBeDefined();
+          expect(serie.Serie.episodes).not.toBeDefined();
+          expect(serie.Serie.category_id).not.toBeDefined();
         });
       },
       (error) => expect(error).not.toBeDefined(),
@@ -50,11 +50,11 @@ describe('getAllMovies', () => {
       attributes: '',
       title: '2',
     };
-    moviesService.getAllMovies(searchQuery).subscribe(
+    seriesService.getAllSeries(searchQuery).subscribe(
       (result) => {
         expect(result.length).toBe(1);
-        expect(result[0].Movie.title).toBe('test Movie 2');
-        expect(result[0].Movie.id).toBe(2);
+        expect(result[0].Serie.title).toBe('test Serie 2');
+        expect(result[0].Serie.id).toBe(3);
       },
       (error) => expect(error).not.toBeDefined(),
       () => done(),
@@ -66,10 +66,10 @@ describe('getAllMovies', () => {
       attributes: '',
       limit: 1,
     };
-    moviesService.getAllMovies(searchQuery).subscribe(
+    seriesService.getAllSeries(searchQuery).subscribe(
       (result) => {
         expect(result.length).toBe(1);
-        expect(result[0].Movie.id).toBe(1);
+        expect(result[0].Serie.id).toBe(1);
       },
       (error) => expect(error).not.toBeDefined(),
       () => done(),
@@ -81,11 +81,11 @@ describe('getAllMovies', () => {
       attributes: '',
       offset: 1,
     };
-    moviesService.getAllMovies(searchQuery).subscribe(
+    seriesService.getAllSeries(searchQuery).subscribe(
       (result) => {
         expect(result.length).toBe(2);
-        expect(result[0].Movie.id).toBe(2);
-        expect(result[1].Movie.id).toBe(3);
+        expect(result[0].Serie.id).toBe(2);
+        expect(result[1].Serie.id).toBe(3);
       },
       (error) => expect(error).not.toBeDefined(),
       () => done(),
@@ -95,14 +95,14 @@ describe('getAllMovies', () => {
   it('correctly orders the values by asc order', (done) => {
     const orderQuery = {
       attributes: '',
-      sort: 'remarks',
+      sort: 'season',
     };
-    moviesService.getAllMovies(orderQuery).subscribe(
+    seriesService.getAllSeries(orderQuery).subscribe(
       (result) => {
         expect(result.length).toBe(3);
-        expect(result[0].Movie.id).toBe(3);
-        expect(result[1].Movie.id).toBe(2);
-        expect(result[2].Movie.id).toBe(1);
+        expect(result[0].Serie.id).toBe(3);
+        expect(result[1].Serie.id).toBe(1);
+        expect(result[2].Serie.id).toBe(2);
       },
       (error) => expect(error).not.toBeDefined(),
       () => done(),
@@ -112,14 +112,14 @@ describe('getAllMovies', () => {
   it('correctly orders the values by desc order', (done) => {
     const orderQuery = {
       attributes: '',
-      sort: '-location_id',
+      sort: '-remarks',
     };
-    moviesService.getAllMovies(orderQuery).subscribe(
+    seriesService.getAllSeries(orderQuery).subscribe(
       (result) => {
         expect(result.length).toBe(3);
-        expect(result[0].Movie.id).toBe(2);
-        expect(result[1].Movie.id).toBe(1);
-        expect(result[2].Movie.id).toBe(3);
+        expect(result[0].Serie.id).toBe(1);
+        expect(result[1].Serie.id).toBe(2);
+        expect(result[2].Serie.id).toBe(3);
       },
       (error) => expect(error).not.toBeDefined(),
       () => done(),
@@ -130,7 +130,7 @@ describe('getAllMovies', () => {
     const erroredQuery = {
       attributes: 'unknown',
     };
-    moviesService.getAllMovies(erroredQuery).subscribe(
+    seriesService.getAllSeries(erroredQuery).subscribe(
       (result) => expect(result).not.toBeDefined(),
       (error) => {
         expect(typeof error).toBe('object');
@@ -143,17 +143,17 @@ describe('getAllMovies', () => {
 });
 
 
-describe('getMovieById', () => {
+describe('getSerieById', () => {
   it('is an observable', () => {
-    expect(moviesService.getMovieById(1).subscribe).toBeDefined();
+    expect(seriesService.getSerieById(1).subscribe).toBeDefined();
   });
 
-  it('correctly returns the expected movie', (done) => {
-    moviesService.getMovieById(1).subscribe(
+  it('correctly returns the expected serie', (done) => {
+    seriesService.getSerieById(1).subscribe(
       (result) => {
         expect(result.id).toBe(1);
-        expect(result.title).toBe('test Movie 1');
-        expect(result.year).toBe(2019);
+        expect(result.title).toBe('test Serie 1');
+        expect(result.season).toBe(1);
         done();
       },
       (error) => expect(error).not.toBeDefined(),
@@ -161,36 +161,37 @@ describe('getMovieById', () => {
     );
   });
 
-  it('correctly catches error when unknown movie', (done) => {
-    moviesService.getMovieById(4).subscribe(
+  it('correctly catches error when unknown serie', (done) => {
+    seriesService.getSerieById(4).subscribe(
       (result) => expect(result).not.toBeDefined(),
       (error) => {
-        expect(error.message).toContain('Movie with id 4 not found.');
+        expect(error.message).toContain('Serie with id 4 not found.');
         done();
       },
     );
   });
 });
 
-describe('createMovie', () => {
+describe('createSerie', () => {
   afterAll(async (done) => {
-    await knex('Movie').where('id', 4).delete();
+    await knex('Serie').where('id', 4).delete();
     done();
   });
 
   it('is an observable', () => {
-    expect(moviesService.createMovie().subscribe).toBeDefined();
+    expect(seriesService.createSerie().subscribe).toBeDefined();
   });
 
   it('completes when correct values are passed', (done) => {
-    const newMovie = {
+    const newSerie = {
       location_id: 1,
-      title: 'Test movie',
+      title: 'Test serie',
       remarks: 'This is a test',
       is_bluray: 1,
-      duration: 42,
+      season: 1,
+      episodes: 42,
     };
-    moviesService.createMovie(newMovie).subscribe(
+    seriesService.createSerie(newSerie).subscribe(
       (result) => {
         expect(result.length).toBe(1);
         expect(result[0]).toBe(4);
@@ -201,10 +202,10 @@ describe('createMovie', () => {
   });
 
   it('fails when invalid values are passed', (done) => {
-    const wrongMovie = {
+    const wrongSerie = {
       wrongField: true,
     };
-    moviesService.createMovie(wrongMovie).subscribe(
+    seriesService.createSerie(wrongSerie).subscribe(
       (result) => expect(result).not.toBeDefined(),
       (error) => {
         expect(typeof error).toBe('object');
@@ -217,33 +218,34 @@ describe('createMovie', () => {
 });
 
 
-describe('updateMovie', () => {
+describe('updateSerie', () => {
   beforeAll(async (done) => {
-    const sampleMovie = {
+    const sampleSerie = {
       location_id: 1,
-      title: 'Test movie',
+      title: 'Test serie',
       remarks: 'This is a test',
       is_bluray: 1,
-      duration: 42,
+      season: 1,
+      episodes: 42,
     };
-    await knex('Movie').insert([sampleMovie]);
+    await knex('Serie').insert([sampleSerie]);
     done();
   });
   afterAll(async (done) => {
-    await knex('Movie').where('id', 5).delete();
+    await knex('Serie').where('id', 5).delete();
     done();
   });
 
   it('is an observable', () => {
-    expect(moviesService.updateMovie().subscribe).toBeDefined();
+    expect(seriesService.updateSerie().subscribe).toBeDefined();
   });
 
   it('completes when correct values are passed', (done) => {
-    const updatedMovie = {
+    const updatedSerie = {
       title: 'updated new title',
       is_digital: 1,
     };
-    moviesService.updateMovie(5, updatedMovie).subscribe(
+    seriesService.updateSerie(5, updatedSerie).subscribe(
       (result) => expect(result).toBe(true),
       (error) => expect(error).not.toBeDefined(),
       () => done(),
@@ -251,7 +253,7 @@ describe('updateMovie', () => {
   });
 
   it('has correctly updated the values', (done) => {
-    knex('Movie').where('id', 5).select()
+    knex('Serie').where('id', 5).select()
       .then((result) => {
         expect(result.length).toBe(1);
         expect(result[0].id).toBe(5);
@@ -260,15 +262,17 @@ describe('updateMovie', () => {
         expect(result[0].is_digital).toBe(1);
         expect(result[0].is_bluray).toBe(1);
         expect(result[0].is_dvd).toBe(0);
+        expect(result[0].season).toBe(1);
+        expect(result[0].episodes).toBe(42);
         done();
       });
   });
 
   it('knows when id has not been found', (done) => {
-    const updatedMovie = {
-      title: 'updated new movie',
+    const updatedSerie = {
+      title: 'updated new serie',
     };
-    moviesService.updateMovie(6, updatedMovie).subscribe(
+    seriesService.updateSerie(6, updatedSerie).subscribe(
       (result) => expect(result).toBe(false),
       (error) => expect(error).not.toBeDefined(),
       () => done(),
@@ -276,10 +280,10 @@ describe('updateMovie', () => {
   });
 
   it('fails when invalid values are passed', (done) => {
-    const wrongMovie = {
+    const wrongSerie = {
       wrongField: true,
     };
-    moviesService.updateMovie(5, wrongMovie).subscribe(
+    seriesService.updateSerie(5, wrongSerie).subscribe(
       (result) => expect(result).not.toBeDefined(),
       (error) => {
         expect(typeof error).toBe('object');
@@ -292,29 +296,30 @@ describe('updateMovie', () => {
 });
 
 
-describe('deleteMovie', () => {
+describe('deleteSerie', () => {
   beforeAll(async (done) => {
-    const sampleMovie = {
+    const sampleSerie = {
       location_id: 1,
-      title: 'Test movie',
+      title: 'Test serie',
       remarks: 'This is a test',
       is_bluray: 1,
-      duration: 42,
+      season: 1,
+      episodes: 42,
     };
-    await knex('Movie').insert([sampleMovie]);
+    await knex('Serie').insert([sampleSerie]);
     done();
   });
   afterAll(async (done) => {
-    await knex('Movie').where('id', 6).delete();
+    await knex('Serie').where('id', 6).delete();
     done();
   });
 
   it('is an observable', () => {
-    expect(moviesService.deleteMovie().subscribe).toBeDefined();
+    expect(seriesService.deleteSerie().subscribe).toBeDefined();
   });
 
   it('has the expected data', (done) => {
-    knex('Movie').where('id', 6).select()
+    knex('Serie').where('id', 6).select()
       .then((result) => {
         expect(result.length).toBe(1);
         done();
@@ -322,7 +327,7 @@ describe('deleteMovie', () => {
   });
 
   it('completes when correct values are passed', (done) => {
-    moviesService.deleteMovie(6).subscribe(
+    seriesService.deleteSerie(6).subscribe(
       () => {},
       (error) => expect(error).not.toBeDefined(),
       () => done(),
@@ -330,7 +335,7 @@ describe('deleteMovie', () => {
   });
 
   it('has correctly deleted the element', (done) => {
-    knex('Movie').where('id', 6).select()
+    knex('Serie').where('id', 6).select()
       .then((result) => {
         expect(result.length).toBe(0);
         done();
@@ -338,7 +343,7 @@ describe('deleteMovie', () => {
   });
 
   it('fails when no values are passed', (done) => {
-    moviesService.deleteMovie().subscribe(
+    seriesService.deleteSerie().subscribe(
       (result) => expect(result).not.toBeDefined(),
       (error) => {
         expect(typeof error).toBe('object');
@@ -351,13 +356,13 @@ describe('deleteMovie', () => {
 });
 
 
-describe('countMovies', () => {
+describe('countSeries', () => {
   it('is an observable', () => {
-    expect(moviesService.countMovies().subscribe).toBeDefined();
+    expect(seriesService.countSeries().subscribe).toBeDefined();
   });
 
-  it('correctly counts all movies location', (done) => {
-    moviesService.countMovies().subscribe(
+  it('correctly counts all series location', (done) => {
+    seriesService.countSeries().subscribe(
       (result) => {
         expect(result.count).toBe(3);
       },
@@ -370,9 +375,9 @@ describe('countMovies', () => {
   });
 
   it('correctly counts when filtering title', (done) => {
-    moviesService.countMovies('2').subscribe(
+    seriesService.countSeries('1').subscribe(
       (result) => {
-        expect(result.count).toBe(1);
+        expect(result.count).toBe(2);
       },
       (error) => {
         expect(error).not.toBeDefined();
