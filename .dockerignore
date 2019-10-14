@@ -2,7 +2,6 @@ tests
 .deploy
 config/database.config.json
 config/keycloak.config.json
-migrations
 .eslintrc
 .gitignore
 .travis.yml
