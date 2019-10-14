@@ -47,6 +47,9 @@ if (env === 'production') {
     resave: false,
     saveUninitialized: true,
     store: sessionStore,
+    cookie: {
+      maxAge: 600000,
+    },
   }));
 }
 
@@ -92,24 +95,29 @@ app.use((req, res, next) => {
   } else if (req.method === 'OPTIONS') {
     next();
   } else if (req.headers.authorization) {
-    const options = {
-      method: 'GET',
-      url: `https://${keycloakHost}/auth/realms/${realmName}/protocol/openid-connect/userinfo`,
-      headers: {
-        Authorization: req.headers.authorization,
-      },
-    };
+    // Check if cookie is still valid:
+    if (req.session !== undefined && req.session.cookie.maxAge > 0) {
+      next();
+    } else {
+      const options = {
+        method: 'GET',
+        url: `https://${keycloakHost}/auth/realms/${realmName}/protocol/openid-connect/userinfo`,
+        headers: {
+          Authorization: req.headers.authorization,
+        },
+      };
 
-    request(options, (error, response) => {
-      if (error) throw new Error(error);
-      if (response.statusCode !== 200) {
-        res.status(401).json({
-          error: 'unauthorized',
-        });
-      } else {
-        next();
-      }
-    });
+      request(options, (error, response) => {
+        if (error) throw new Error(error);
+        if (response.statusCode !== 200) {
+          res.status(401).json({
+            error: 'unauthorized',
+          });
+        } else {
+          next();
+        }
+      });
+    }
   } else {
     res.status(401).json({
       error: 'unauthorized',
