@@ -23,7 +23,7 @@
     "express-mysql-session": "^2.1.0",
     "express-session": "^1.16.2",
     "keycloak-connect": "^6.0.1",
-    "knex": "^0.19.0",
+    "knex": "^0.19.5",
     "morgan": "^1.9.1",
     "pug": "^2.0.4",
     "request": "^2.88.0",
