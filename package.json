@@ -1,6 +1,6 @@
 {
   "name": "porygon-backend",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "REST API for the Porygon website",
   "private": true,
   "scripts": {
