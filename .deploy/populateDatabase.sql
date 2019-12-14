@@ -12,6 +12,6 @@ VALUES  (null, 1, 'test Movie 1', 'no comment', '', '', 2019, 42, 1, 1, 0, 2, 't
         (null, 1, 'test Movie 3', '', 'No one', '', 2005, 180, 0, 1, 1, 1, 'titre français');
 
 INSERT INTO Serie
-VALUES  (null, 1, 'test Serie 1', 1, 'no comment', 13, 0, 0, 1, 1),
-        (null, 1, 'test Serie 1', 2, 'no comment', 13, 0, 0, 1, 1),
-        (null, 2, 'test Serie 2', 0, '', 4, 1, 0, 0, 2);
+VALUES  (null, 1, 'test Serie 1', 1, 'no comment', 13, 0, 0, 1, 1, 2012),
+        (null, 1, 'test Serie 1', 2, 'no comment', 13, 0, 0, 1, 1, 2013),
+        (null, 2, 'test Serie 2', 0, '', 4, 1, 0, 0, 2, 2019);

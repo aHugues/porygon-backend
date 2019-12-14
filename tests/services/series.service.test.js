@@ -38,6 +38,7 @@ describe('getAllSeries', () => {
           expect(serie.Serie.remarks).not.toBeDefined();
           expect(serie.Serie.episodes).not.toBeDefined();
           expect(serie.Serie.category_id).not.toBeDefined();
+          expect(serie.Serie.year).not.toBeDefined();
         });
       },
       (error) => expect(error).not.toBeDefined(),
@@ -154,6 +155,7 @@ describe('getSerieById', () => {
         expect(result.id).toBe(1);
         expect(result.title).toBe('test Serie 1');
         expect(result.season).toBe(1);
+        expect(result.year).toBe(2012);
         done();
       },
       (error) => expect(error).not.toBeDefined(),
@@ -190,6 +192,7 @@ describe('createSerie', () => {
       is_bluray: 1,
       season: 1,
       episodes: 42,
+      year: 2019,
     };
     seriesService.createSerie(newSerie).subscribe(
       (result) => {
@@ -227,6 +230,7 @@ describe('updateSerie', () => {
       is_bluray: 1,
       season: 1,
       episodes: 42,
+      year: 2019,
     };
     await knex('Serie').insert([sampleSerie]);
     done();
@@ -264,6 +268,7 @@ describe('updateSerie', () => {
         expect(result[0].is_dvd).toBe(0);
         expect(result[0].season).toBe(1);
         expect(result[0].episodes).toBe(42);
+        expect(result[0].year).toBe(2019);
         done();
       });
   });
@@ -305,6 +310,7 @@ describe('deleteSerie', () => {
       is_bluray: 1,
       season: 1,
       episodes: 42,
+      year: 2019,
     };
     await knex('Serie').insert([sampleSerie]);
     done();
