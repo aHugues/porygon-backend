@@ -2,7 +2,30 @@ const rxjs = require('rxjs');
 const knex = require('./database.service');
 const cleanup = require('../middlewares/cleanup');
 
+const AUTHORIZED_FIELDS = [
+  'location_id',
+  'title',
+  'remarks',
+  'actors',
+  'year',
+  'duration',
+  'is_dvd',
+  'is_bluray',
+  'is_digital',
+  'category_id',
+  'french_title',
+];
+
+
 const service = {};
+
+function createErrorInvalidField(field) {
+  const message = `Unauthorized field '${field}' in query`;
+  return {
+    message,
+    status: 400,
+  };
+}
 
 const getAllMovies = (query) => {
   // Get the fields selector
@@ -103,6 +126,9 @@ const getMovieById = (id) => {
 
 const createMovie = (fields) => {
   const observable = rxjs.Observable.create((obs) => {
+    Object.keys(fields).forEach((field) => {
+      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
+    });
     knex('Movie').insert(cleanup.removeNulls(fields))
       .then((instance) => {
         obs.next(instance);
@@ -118,6 +144,9 @@ const createMovie = (fields) => {
 
 const updateMovie = (id, fields) => {
   const observable = rxjs.Observable.create((obs) => {
+    Object.keys(fields).forEach((field) => {
+      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
+    });
     knex('Movie').where('id', id).update(cleanup.removeNulls(fields))
       .then((affectedRows) => {
         obs.next(affectedRows > 0);

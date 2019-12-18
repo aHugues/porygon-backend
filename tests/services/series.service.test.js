@@ -212,8 +212,8 @@ describe('createSerie', () => {
       (result) => expect(result).not.toBeDefined(),
       (error) => {
         expect(typeof error).toBe('object');
-        expect(error.name).toBe('Error');
-        expect(error.message).toContain('ER_BAD_FIELD_ERROR');
+        expect(error.status).toBe(400);
+        expect(error.message).toBe("Unauthorized field 'wrongField' in query");
         done();
       },
     );
@@ -292,8 +292,8 @@ describe('updateSerie', () => {
       (result) => expect(result).not.toBeDefined(),
       (error) => {
         expect(typeof error).toBe('object');
-        expect(error.name).toBe('Error');
-        expect(error.message).toContain('ER_BAD_FIELD_ERROR');
+        expect(error.status).toBe(400);
+        expect(error.message).toBe("Unauthorized field 'wrongField' in query");
         done();
       },
     );

@@ -3,7 +3,20 @@ const rxjs = require('rxjs');
 const knex = require('./database.service');
 const cleanup = require('../middlewares/cleanup');
 
+const AUTHORIZED_FIELDS = [
+  'label',
+  'description',
+];
+
 const service = {};
+
+function createErrorInvalidField(field) {
+  const message = `Unauthorized field '${field}' in query`;
+  return {
+    message,
+    status: 400,
+  };
+}
 
 const getAllCategories = (query) => {
   // Get the fields selector
@@ -66,6 +79,9 @@ const getCategoryById = (id) => {
 
 const createCategory = (fields) => {
   const observable = rxjs.Observable.create((obs) => {
+    Object.keys(fields).forEach((field) => {
+      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
+    });
     knex('Category').insert(cleanup.removeNulls(fields))
       .then((instance) => {
         obs.next(instance);
@@ -81,6 +97,9 @@ const createCategory = (fields) => {
 
 const updateCategory = (id, fields) => {
   const observable = rxjs.Observable.create((obs) => {
+    Object.keys(fields).forEach((field) => {
+      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
+    });
     knex('Category').where('id', id).update(cleanup.removeNulls(fields))
       .then((affectedRows) => {
         obs.next(affectedRows > 0);
