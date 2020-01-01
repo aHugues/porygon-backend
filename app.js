@@ -7,6 +7,8 @@ const session = require('express-session');
 const Keycloak = require('keycloak-connect');
 const request = require('request');
 const MySQLSessionStore = require('express-mysql-session')(session);
+const ExpressSwagger = require('express-swagger-generator');
+const Package = require('./package.json');
 
 // Config file
 const config = require('./config/server.config.json');
@@ -40,6 +42,8 @@ const categories = require('./routes/categories.controller');
 
 const app = express();
 
+const expressSwagger = ExpressSwagger(app);
+
 // session in production environment
 if (env === 'production') {
   app.use(session({
@@ -53,6 +57,34 @@ if (env === 'production') {
   }));
 }
 
+const swaggerOptions = {
+  swaggerDefinition: {
+    info: {
+      description: Package.description,
+      title: 'Documentation API',
+      version: Package.version,
+    },
+    host: `${config.doc.baseHost}`,
+    basePath: `/api/v${version}`,
+    produces: [
+      'application/json',
+      'application/xml',
+    ],
+    schemes: ['http', 'https'],
+    securityDefinitions: {
+      // JWT: {
+      //   type: 'apiKey',
+      //   in: 'header',
+      //   name: 'Authorization',
+      //   description: '',
+      // },
+    },
+  },
+  basedir: __dirname, // app absolute path
+  files: ['./routes/**/*.js'], // Path to the API handle folder
+};
+
+expressSwagger(swaggerOptions);
 const router = express.Router();
 
 // view engine setup
