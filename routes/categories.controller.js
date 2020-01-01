@@ -4,7 +4,13 @@ const router = express.Router();
 
 const CategoriesService = require('../services/categories.service');
 
-
+/**
+ * This function comment is parsed by doctrine
+ * @route GET /categories
+ * @group foo - Operations about categories
+ * @returns {object} 200 - An array of categories in database
+ * @returns {Error}  default - Unexpected error
+ */
 const getAllCategories = (req, res, next) => {
   const onNext = (data) => {
     res.json(data);
