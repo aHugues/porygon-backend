@@ -57,7 +57,7 @@ log4js.configure({
 });
 
 const logger = log4js.getLogger(env === 'production' ? 'prod' : 'dev');
-logger.info(`Starting server in ${env} mode`);
+logger.info(`Starting Porygon version ${Package.version || 'unknown'} server in ${env} mode`);
 logger.info(`Authentication will be ${env === 'production' ? 'enabled' : 'disabled'}.`);
 
 // setup store in production environment
@@ -182,6 +182,7 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Porygon-API-Version', Package.version || '1');
   next();
 });
 
