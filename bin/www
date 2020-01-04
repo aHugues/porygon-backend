@@ -4,10 +4,13 @@
  * Module dependencies.
  */
 
-const debug = require('debug')('backend:server');
 const http = require('http');
+const log4js = require('log4js');
 const app = require('../app');
 const config = require('../config/server.config.json');
+
+const env = process.env.NODE_ENV || 'development';
+const logger = log4js.getLogger(env === 'development' ? 'dev' : 'prod');
 
 /**
  * Normalize a port into a number, string, or false.
@@ -59,11 +62,11 @@ function onError(error) {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(`${bind} requires elevated privileges`);
+      logger.fatal(`${bind} requires elevated privileges`);
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(`${bind} is already in use`);
+      logger.fatal(`${bind} is already in use`);
       process.exit(1);
       break;
     default:
@@ -80,7 +83,7 @@ function onListening() {
   const bind = typeof addr === 'string'
     ? `pipe ${addr}`
     : `port ${addr.port}`;
-  debug(`Listening on ${bind}`);
+  logger.info(`Listening on ${bind}`);
 }
 
 

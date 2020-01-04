@@ -1,6 +1,10 @@
 const rxjs = require('rxjs');
+const log4js = require('log4js');
 const knex = require('./database.service');
 const cleanup = require('../middlewares/cleanup');
+
+const env = process.env.NODE_ENV || 'development';
+const logger = log4js.getLogger(env === 'development' ? 'dev' : 'prod');
 
 const AUTHORIZED_FIELDS = [
   'location_id',
@@ -20,6 +24,7 @@ const AUTHORIZED_FIELDS = [
 const service = {};
 
 function createErrorInvalidField(field) {
+  logger.error(`Found invalid field '${field} in request`);
   const message = `Unauthorized field '${field}' in query`;
   return {
     message,
@@ -28,6 +33,7 @@ function createErrorInvalidField(field) {
 }
 
 const getAllMovies = (query) => {
+  logger.debug(`Getting all movies with query ${JSON.stringify(query)}`);
   // Get the fields selector
   let { attributes } = query;
   if (attributes) {
@@ -87,10 +93,12 @@ const getAllMovies = (query) => {
       .options({ nestTables: true })
       .select(attributes)
       .then((movies) => {
+        logger.debug(`Found movies ${JSON.stringify(movies)}`);
         obs.next(movies);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when getting movies: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -99,6 +107,7 @@ const getAllMovies = (query) => {
 
 
 const getMovieById = (id) => {
+  logger.debug(`Getting movie with id ${id}`);
   const observable = rxjs.Observable.create((obs) => {
     knex('Movie').where('Movie.id', id)
       .join('Location', 'Location.id', 'Movie.location_id')
@@ -112,11 +121,13 @@ const getMovieById = (id) => {
           const result = movie[0].Movie;
           result.location = movie[0].Location;
           result.category = movie[0].Category;
+          logger.debug(`Found movie with id ${id}: ${JSON.stringify(result)}`);
           obs.next(result);
           obs.complete();
         }
       })
       .catch((error) => {
+        logger.error(`Error when looking for movie: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -125,16 +136,19 @@ const getMovieById = (id) => {
 
 
 const createMovie = (fields) => {
+  logger.debug(`Creating movie with fields ${JSON.stringify(fields)}`);
   const observable = rxjs.Observable.create((obs) => {
     Object.keys(fields).forEach((field) => {
       if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
     });
     knex('Movie').insert(cleanup.removeNulls(fields))
       .then((instance) => {
+        logger.debug('Movie successfully created');
         obs.next(instance);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when creating movie: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -143,16 +157,19 @@ const createMovie = (fields) => {
 
 
 const updateMovie = (id, fields) => {
+  logger.debug(`Updating movie with id ${id} using fields ${JSON.stringify(fields)}`);
   const observable = rxjs.Observable.create((obs) => {
     Object.keys(fields).forEach((field) => {
       if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
     });
     knex('Movie').where('id', id).update(cleanup.removeNulls(fields))
       .then((affectedRows) => {
+        logger.debug(affectedRows > 0 ? 'Movie successfully modified' : 'No modification');
         obs.next(affectedRows > 0);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when modifying movie: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -161,12 +178,15 @@ const updateMovie = (id, fields) => {
 
 
 const deleteMovie = (id) => {
+  logger.debug(`Deleting movie with id ${id}`);
   const observable = rxjs.Observable.create((obs) => {
     knex('Movie').where('id', id).delete()
       .then(() => {
+        logger.debug(`Movie ${id} successfully deleted`);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when deleting movie: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -175,6 +195,7 @@ const deleteMovie = (id) => {
 
 
 const countMovies = (queryTitle) => {
+  logger.debug(`Counting movies with query ${queryTitle}`);
   let title = '%';
   if (typeof queryTitle !== 'undefined') {
     title = `%${queryTitle}%`;
@@ -183,10 +204,12 @@ const countMovies = (queryTitle) => {
   const observable = rxjs.Observable.create((obs) => {
     knex('Movie').where(knex.raw('LOWER(`title`)'), 'like', title).count('* as count')
       .then((count) => {
+        logger.debug(`Found ${count[0]} movies`);
         obs.next(count[0]);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when counting movies: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });

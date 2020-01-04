@@ -1,6 +1,10 @@
 const rxjs = require('rxjs');
+const log4js = require('log4js');
 const knex = require('./database.service');
 const cleanup = require('../middlewares/cleanup');
+
+const env = process.env.NODE_ENV || 'development';
+const logger = log4js.getLogger(env === 'development' ? 'dev' : 'prod');
 
 const AUTHORIZED_FIELDS = [
   'location_id',
@@ -19,6 +23,7 @@ const AUTHORIZED_FIELDS = [
 const service = {};
 
 function createErrorInvalidField(field) {
+  logger.error(`Found invalid field '${field} in request`);
   const message = `Unauthorized field '${field}' in query`;
   return {
     message,
@@ -27,6 +32,7 @@ function createErrorInvalidField(field) {
 }
 
 const getAllSeries = (query) => {
+  logger.debug(`Getting all series with query ${JSON.stringify(query)}`);
   // Get the fields selector
   let { attributes } = query;
   if (attributes) {
@@ -85,10 +91,12 @@ const getAllSeries = (query) => {
       .options({ nestTables: true })
       .select(attributes)
       .then((series) => {
+        logger.debug(`Found series ${JSON.stringify(series)}`);
         obs.next(series);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when getting series: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -97,6 +105,7 @@ const getAllSeries = (query) => {
 
 
 const getSerieById = (id) => {
+  logger.debug(`Getting serie with id ${id}`);
   const observable = rxjs.Observable.create((obs) => {
     knex('Serie').where('Serie.id', id)
       .join('Location', 'Location.id', 'Serie.location_id')
@@ -105,17 +114,19 @@ const getSerieById = (id) => {
       .then((serie) => {
         if (serie.length < 1) {
           const error = Error(`Serie with id ${id} not found.`);
-          error.statusCode = 404;
+          error.status = 404;
           throw error;
         } else {
           const result = serie[0].Serie;
           result.location = serie[0].Location;
           result.category = serie[0].Category;
+          logger.debug(`Found serie with id ${id}: ${JSON.stringify(result)}`);
           obs.next(result);
           obs.complete();
         }
       })
       .catch((error) => {
+        logger.error(`Error when looking for serie: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -124,16 +135,19 @@ const getSerieById = (id) => {
 
 
 const createSerie = (fields) => {
+  logger.debug(`Creating serie with fields ${JSON.stringify(fields)}`);
   const observable = rxjs.Observable.create((obs) => {
     Object.keys(fields).forEach((field) => {
       if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
     });
     knex('Serie').insert(cleanup.removeNulls(fields))
       .then((instance) => {
+        logger.debug('Serie successfully created');
         obs.next(instance);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when creating serie: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -143,15 +157,18 @@ const createSerie = (fields) => {
 
 const updateSerie = (id, fields) => {
   const observable = rxjs.Observable.create((obs) => {
+    logger.debug(`Updating serie with id ${id} using fields ${JSON.stringify(fields)}`);
     Object.keys(fields).forEach((field) => {
       if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
     });
     knex('Serie').where('id', id).update(cleanup.removeNulls(fields))
       .then((affectedRows) => {
+        logger.debug(affectedRows > 0 ? 'Serie successfully modified' : 'No modification');
         obs.next(affectedRows > 0);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when modifying serie: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -160,12 +177,15 @@ const updateSerie = (id, fields) => {
 
 
 const deleteSerie = (id) => {
+  logger.debug(`Deleting serie with id ${id}`);
   const observable = rxjs.Observable.create((obs) => {
     knex('Serie').where('id', id).delete()
       .then(() => {
+        logger.debug(`Serie ${id} successfully deleted`);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when deleting serie: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -174,6 +194,7 @@ const deleteSerie = (id) => {
 
 
 const countSeries = (queryTitle) => {
+  logger.debug(`Counting series with query ${queryTitle}`);
   let title = '%';
   if (typeof queryTitle !== 'undefined') {
     title = `%${queryTitle}%`;
@@ -182,10 +203,12 @@ const countSeries = (queryTitle) => {
   const observable = rxjs.Observable.create((obs) => {
     knex('Serie').where(knex.raw('LOWER(`title`)'), 'like', title).count('* as count')
       .then((count) => {
+        logger.debug(`Found ${count[0]} series`);
         obs.next(count[0]);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when counting series: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
