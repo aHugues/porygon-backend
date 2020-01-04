@@ -1,7 +1,10 @@
 const rxjs = require('rxjs');
-
+const log4js = require('log4js');
 const knex = require('./database.service');
 const cleanup = require('../middlewares/cleanup');
+
+const env = process.env.NODE_ENV || 'development';
+const logger = log4js.getLogger(env === 'development' ? 'dev' : 'prod');
 
 const AUTHORIZED_FIELDS = [
   'location',
@@ -11,6 +14,7 @@ const AUTHORIZED_FIELDS = [
 const service = {};
 
 function createErrorInvalidField(field) {
+  logger.error(`Found invalid field '${field} in request`);
   const message = `Unauthorized field '${field}' in query`;
   return {
     message,
@@ -19,6 +23,7 @@ function createErrorInvalidField(field) {
 }
 
 const getAllLocations = (query) => {
+  logger.debug(`Getting all locations with query ${JSON.stringify(query)}`);
   // Get the fields selector
   let { attributes } = query;
   if (attributes) {
@@ -45,10 +50,12 @@ const getAllLocations = (query) => {
   const observable = rxjs.Observable.create((obs) => {
     knex('Location').where(knex.raw('LOWER(`location`)'), 'like', labelSearch).orderBy(order[0], order[1]).select(attributes)
       .then((locations) => {
+        logger.debug(`Found locations ${JSON.stringify(locations)}`);
         obs.next(locations);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when getting locations: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -57,6 +64,7 @@ const getAllLocations = (query) => {
 
 
 const getLocationById = (id) => {
+  logger.debug(`Getting location with id ${id}`);
   const observable = rxjs.Observable.create((obs) => {
     knex('Location').where('id', id).select()
       .then((rows) => {
@@ -65,11 +73,13 @@ const getLocationById = (id) => {
           error.statusCode = 404;
           throw error;
         } else {
+          logger.debug(`Found location with id ${id}: ${JSON.stringify(rows)}`);
           obs.next(rows);
           obs.complete();
         }
       })
       .catch((error) => {
+        logger.error(`Error when looking for location: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -78,16 +88,19 @@ const getLocationById = (id) => {
 
 
 const createLocation = (fields) => {
+  logger.debug(`Creating location with fields ${JSON.stringify(fields)}`);
   const observable = rxjs.Observable.create((obs) => {
     Object.keys(fields).forEach((field) => {
       if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
     });
     knex('Location').insert(cleanup.removeNulls(fields))
       .then((instance) => {
+        logger.debug('Location successfully created');
         obs.next(instance);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when creating location: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -97,15 +110,18 @@ const createLocation = (fields) => {
 
 const updateLocation = (id, fields) => {
   const observable = rxjs.Observable.create((obs) => {
+    logger.debug(`Updating location with id ${id} using fields ${JSON.stringify(fields)}`);
     Object.keys(fields).forEach((field) => {
       if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
     });
     knex('Location').where('id', id).update(cleanup.removeNulls(fields))
       .then((affectedRows) => {
+        logger.debug(affectedRows > 0 ? 'Location successfully modified' : 'No modification');
         obs.next(affectedRows > 0);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when modifying location: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -114,12 +130,15 @@ const updateLocation = (id, fields) => {
 
 
 const deleteLocation = (id) => {
+  logger.debug(`Deleting location with id ${id}`);
   const observable = rxjs.Observable.create((obs) => {
     knex('Location').where('id', id).delete()
       .then(() => {
+        logger.debug(`Location ${id} successfully deleted`);
         obs.complete();
       })
       .catch((error) => {
+        logger.error(`Error when deleting location: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
@@ -128,30 +147,37 @@ const deleteLocation = (id) => {
 
 
 const countForLocation = (id) => {
+  logger.debug(`Counting elements in location ${id}`);
   let moviesCompleted = false;
   let seriesCompleted = false;
   const observable = rxjs.Observable.create((obs) => {
     knex('Movie').where('location_id', id).count()
       .then((count) => {
+        logger.debug(`Found ${count[0]['count(*)']} movies`);
         obs.next(['movies', count[0]['count(*)']]);
         moviesCompleted = true;
         if (seriesCompleted) {
+          logger.debug('Series already completed.');
           obs.complete();
         }
       })
       .catch((error) => {
+        logger.error(`Error when counting movies: ${JSON.stringify(error)}`);
         obs.error(error);
       });
 
     knex('Serie').where('location_id', id).count()
       .then((count) => {
+        logger.debug(`Found ${count[0]['count(*)']} series`);
         obs.next(['series', count[0]['count(*)']]);
         seriesCompleted = true;
         if (moviesCompleted) {
+          logger.debug('Movies already completed.');
           obs.complete();
         }
       })
       .catch((error) => {
+        logger.error(`Error when counting series: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });

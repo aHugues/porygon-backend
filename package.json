@@ -9,7 +9,7 @@
     "migrate:reset": "db-migrate --config config/database.config.json --env test reset",
     "migrate:init": "mysql -u travis porygonTest < .deploy/populateDatabase.sql",
     "pretest": "npm run migrate:reset && npm run migrate:test && npm run migrate:init",
-    "test": "NODE_ENV=test jest --detectOpenHandles --testTimeout=10000"
+    "test": "NODE_ENV=test LOG_LEVEL=debug jest --detectOpenHandles --testTimeout=10000"
   },
   "dependencies": {
     "acorn": "^6.2.0",
@@ -25,9 +25,11 @@
     "express-swagger-generator": "^1.1.15",
     "keycloak-connect": "^6.0.1",
     "knex": "^0.19.5",
+    "log4js": "^6.1.0",
     "morgan": "^1.9.1",
     "pug": "^2.0.4",
     "request": "^2.88.0",
+    "rotating-file-stream": "^2.0.1",
     "rxjs": "^5.5.12",
     "serve-favicon": "^2.5.0"
   },
