@@ -2,7 +2,6 @@ const express = require('express');
 const path = require('path');
 const morgan = require('morgan');
 const log4js = require('log4js');
-const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const Keycloak = require('keycloak-connect');
@@ -52,7 +51,7 @@ log4js.configure({
   categories: {
     dev: { appenders: ['console'], level: logLevel },
     default: { appenders: ['console'], level: logLevel },
-    prod: { appenders: ['outfile', 'onlyError'], level: 'info' },
+    prod: { appenders: ['outfile', 'onlyError'], level: logLevel },
   },
 });
 
@@ -106,11 +105,12 @@ if (env === 'production') {
   logger.debug('Creating session handler');
   app.use(session({
     secret: config.secretKey,
+    name: 'porygon-api-sid',
     resave: false,
     saveUninitialized: true,
     store: sessionStore,
     cookie: {
-      maxAge: 600000,
+      maxAge: 3600000,
     },
   }));
   logger.debug('Session handler created');
@@ -156,14 +156,14 @@ app.set('view engine', 'pug');
 
 // uncomment after placing your favicon in /public
 // app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-if (env === 'production') {
-  logger.debug('Initializing Keycloak middleware');
-  app.use(keycloak.middleware({
-    logout: 'logout',
-    admin: '/',
-  }));
-  logger.debug('Keycloak middleware initialized');
-}
+// if (env === 'production') {
+//   logger.debug('Initializing Keycloak middleware');
+//   app.use(keycloak.middleware({
+//     logout: 'logout',
+//     admin: '/',
+//   }));
+//   logger.debug('Keycloak middleware initialized');
+// }
 
 logger.debug('Initializing requests logger');
 if (env === 'production') {
@@ -175,7 +175,6 @@ logger.debug('Requests logger initialized');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
@@ -192,9 +191,13 @@ let realmName = '';
 if (env === 'production') {
   keycloakHost = keycloakConfig.host;
   realmName = keycloakConfig.realm;
+  logger.debug(`Linking to keycloak realm '${realmName}' on host '${keycloakHost}'`);
 }
 
 app.use((req, res, next) => {
+  // logger.debug(`Handling session ${JSON.stringify(req.session)}`);
+  // logger.debug(`Token is ${req.headers.authorization}`);
+  // logger.debug(`Headers: ${JSON.stringify(req.headers)}`);
   // Bypass authentication on dev environment
   if (env !== 'production') {
     logger.debug('Not in production - authentication ignored.');
@@ -204,7 +207,8 @@ app.use((req, res, next) => {
     next();
   } else if (req.headers.authorization) {
     // Check if cookie is still valid:
-    if (req.session !== undefined && req.session.cookie.maxAge > 0) {
+    if (req.session !== undefined && req.session.cookie.maxAge > 0 && req.session.verified) {
+      logger.debug(`Session is valid for ${req.session.cookie.maxAge} seconds`);
       logger.debug('Session is valid, continuying.');
       next();
     } else {
@@ -225,7 +229,9 @@ app.use((req, res, next) => {
             error: 'unauthorized',
           });
         } else {
+          // console.log(response);
           logger.debug('Authorization is valid.');
+          req.session.verified = true;
           next();
         }
       });
