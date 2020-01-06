@@ -178,9 +178,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Origin', config.server.frontendOrigin);
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Credentials', true);
   res.header('Porygon-API-Version', Package.version || '1');
   next();
 });
@@ -195,9 +196,10 @@ if (env === 'production') {
 }
 
 app.use((req, res, next) => {
-  // logger.debug(`Handling session ${JSON.stringify(req.session)}`);
-  // logger.debug(`Token is ${req.headers.authorization}`);
-  // logger.debug(`Headers: ${JSON.stringify(req.headers)}`);
+   logger.debug(`Handling session ${JSON.stringify(req.session)}`);
+   logger.debug(`Token is ${req.headers.authorization}`);
+   logger.debug(`Headers: ${JSON.stringify(req.headers)}`);
+    logger.debug(`Session: ${req.session.id}`);
   // Bypass authentication on dev environment
   if (env !== 'production') {
     logger.debug('Not in production - authentication ignored.');
