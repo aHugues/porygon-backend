@@ -196,10 +196,6 @@ if (env === 'production') {
 }
 
 app.use((req, res, next) => {
-   logger.debug(`Handling session ${JSON.stringify(req.session)}`);
-   logger.debug(`Token is ${req.headers.authorization}`);
-   logger.debug(`Headers: ${JSON.stringify(req.headers)}`);
-    logger.debug(`Session: ${req.session.id}`);
   // Bypass authentication on dev environment
   if (env !== 'production') {
     logger.debug('Not in production - authentication ignored.');

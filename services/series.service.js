@@ -2,6 +2,7 @@ const rxjs = require('rxjs');
 const log4js = require('log4js');
 const knex = require('./database.service');
 const cleanup = require('../middlewares/cleanup');
+const FieldsVerification = require('../middlewares/fields_verification');
 
 const env = process.env.NODE_ENV || 'development';
 const logger = log4js.getLogger(env === 'development' ? 'dev' : 'prod');
@@ -22,14 +23,6 @@ const AUTHORIZED_FIELDS = [
 
 const service = {};
 
-function createErrorInvalidField(field) {
-  logger.error(`Found invalid field '${field} in request`);
-  const message = `Unauthorized field '${field}' in query`;
-  return {
-    message,
-    status: 400,
-  };
-}
 
 const getAllSeries = (query) => {
   logger.debug(`Getting all series with query ${JSON.stringify(query)}`);
@@ -137,9 +130,8 @@ const getSerieById = (id) => {
 const createSerie = (fields) => {
   logger.debug(`Creating serie with fields ${JSON.stringify(fields)}`);
   const observable = rxjs.Observable.create((obs) => {
-    Object.keys(fields).forEach((field) => {
-      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
-    });
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
     knex('Serie').insert(cleanup.removeNulls(fields))
       .then((instance) => {
         logger.debug('Serie successfully created');
@@ -158,9 +150,8 @@ const createSerie = (fields) => {
 const updateSerie = (id, fields) => {
   const observable = rxjs.Observable.create((obs) => {
     logger.debug(`Updating serie with id ${id} using fields ${JSON.stringify(fields)}`);
-    Object.keys(fields).forEach((field) => {
-      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
-    });
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
     knex('Serie').where('id', id).update(cleanup.removeNulls(fields))
       .then((affectedRows) => {
         logger.debug(affectedRows > 0 ? 'Serie successfully modified' : 'No modification');

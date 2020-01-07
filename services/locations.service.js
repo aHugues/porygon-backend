@@ -2,6 +2,7 @@ const rxjs = require('rxjs');
 const log4js = require('log4js');
 const knex = require('./database.service');
 const cleanup = require('../middlewares/cleanup');
+const FieldsVerification = require('../middlewares/fields_verification');
 
 const env = process.env.NODE_ENV || 'development';
 const logger = log4js.getLogger(env === 'development' ? 'dev' : 'prod');
@@ -13,14 +14,6 @@ const AUTHORIZED_FIELDS = [
 
 const service = {};
 
-function createErrorInvalidField(field) {
-  logger.error(`Found invalid field '${field} in request`);
-  const message = `Unauthorized field '${field}' in query`;
-  return {
-    message,
-    status: 400,
-  };
-}
 
 const getAllLocations = (query) => {
   logger.debug(`Getting all locations with query ${JSON.stringify(query)}`);
@@ -90,9 +83,8 @@ const getLocationById = (id) => {
 const createLocation = (fields) => {
   logger.debug(`Creating location with fields ${JSON.stringify(fields)}`);
   const observable = rxjs.Observable.create((obs) => {
-    Object.keys(fields).forEach((field) => {
-      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
-    });
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
     knex('Location').insert(cleanup.removeNulls(fields))
       .then((instance) => {
         logger.debug('Location successfully created');
@@ -111,9 +103,8 @@ const createLocation = (fields) => {
 const updateLocation = (id, fields) => {
   const observable = rxjs.Observable.create((obs) => {
     logger.debug(`Updating location with id ${id} using fields ${JSON.stringify(fields)}`);
-    Object.keys(fields).forEach((field) => {
-      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
-    });
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
     knex('Location').where('id', id).update(cleanup.removeNulls(fields))
       .then((affectedRows) => {
         logger.debug(affectedRows > 0 ? 'Location successfully modified' : 'No modification');
