@@ -2,6 +2,7 @@ const rxjs = require('rxjs');
 const log4js = require('log4js');
 const knex = require('./database.service');
 const cleanup = require('../middlewares/cleanup');
+const FieldsVerification = require('../middlewares/fields_verification');
 
 const env = process.env.NODE_ENV || 'development';
 const logger = log4js.getLogger(env === 'development' ? 'dev' : 'prod');
@@ -13,14 +14,6 @@ const AUTHORIZED_FIELDS = [
 
 const service = {};
 
-function createErrorInvalidField(field) {
-  logger.error(`Found invalid field '${field} in request`);
-  const message = `Unauthorized field '${field}' in query`;
-  return {
-    message,
-    status: 400,
-  };
-}
 
 const getAllCategories = (query) => {
   logger.debug(`Getting all categories with query ${JSON.stringify(query)}`);
@@ -90,9 +83,8 @@ const getCategoryById = (id) => {
 const createCategory = (fields) => {
   logger.debug(`Creating category with fields ${JSON.stringify(fields)}`);
   const observable = rxjs.Observable.create((obs) => {
-    Object.keys(fields).forEach((field) => {
-      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
-    });
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
     knex('Category').insert(cleanup.removeNulls(fields))
       .then((instance) => {
         logger.debug('Category successfully created');
@@ -111,9 +103,8 @@ const createCategory = (fields) => {
 const updateCategory = (id, fields) => {
   logger.debug(`Updating category with id ${id} using fields ${JSON.stringify(fields)}`);
   const observable = rxjs.Observable.create((obs) => {
-    Object.keys(fields).forEach((field) => {
-      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
-    });
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
     knex('Category').where('id', id).update(cleanup.removeNulls(fields))
       .then((affectedRows) => {
         logger.debug(affectedRows > 0 ? 'Category successfully modified' : 'No modification');

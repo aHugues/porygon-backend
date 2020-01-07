@@ -2,6 +2,7 @@ const rxjs = require('rxjs');
 const log4js = require('log4js');
 const knex = require('./database.service');
 const cleanup = require('../middlewares/cleanup');
+const FieldsVerification = require('../middlewares/fields_verification');
 
 const env = process.env.NODE_ENV || 'development';
 const logger = log4js.getLogger(env === 'development' ? 'dev' : 'prod');
@@ -23,14 +24,6 @@ const AUTHORIZED_FIELDS = [
 
 const service = {};
 
-function createErrorInvalidField(field) {
-  logger.error(`Found invalid field '${field} in request`);
-  const message = `Unauthorized field '${field}' in query`;
-  return {
-    message,
-    status: 400,
-  };
-}
 
 const getAllMovies = (query) => {
   logger.debug(`Getting all movies with query ${JSON.stringify(query)}`);
@@ -138,9 +131,8 @@ const getMovieById = (id) => {
 const createMovie = (fields) => {
   logger.debug(`Creating movie with fields ${JSON.stringify(fields)}`);
   const observable = rxjs.Observable.create((obs) => {
-    Object.keys(fields).forEach((field) => {
-      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
-    });
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
     knex('Movie').insert(cleanup.removeNulls(fields))
       .then((instance) => {
         logger.debug('Movie successfully created');
@@ -159,9 +151,8 @@ const createMovie = (fields) => {
 const updateMovie = (id, fields) => {
   logger.debug(`Updating movie with id ${id} using fields ${JSON.stringify(fields)}`);
   const observable = rxjs.Observable.create((obs) => {
-    Object.keys(fields).forEach((field) => {
-      if (!AUTHORIZED_FIELDS.includes(field)) obs.error(createErrorInvalidField(field));
-    });
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
     knex('Movie').where('id', id).update(cleanup.removeNulls(fields))
       .then((affectedRows) => {
         logger.debug(affectedRows > 0 ? 'Movie successfully modified' : 'No modification');
