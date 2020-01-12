@@ -12,9 +12,11 @@ RUN rm /usr/src/app/config/server.config.json
 RUN ln -s /config/server.config.json /usr/src/app/config/server.config.json
 
 RUN mkdir /logs
+RUN mkdir /socket
 
 VOLUME /config
 VOLUME /logs
+VOLUME /socket
 
 RUN npm install
 EXPOSE 4000
