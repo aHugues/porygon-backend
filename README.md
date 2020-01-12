@@ -94,8 +94,10 @@ server.config.json
 
 {
     "server": {
+        "listenTarget": "socket",
         "host": "127.0.0.1",
         "port": 4000,
+        "socket": "/tmp/porygon.sock",
         "version": 1,
         "frontendOrigin": "http://127.0.0.1:8080",
         "logLevel": "info",
@@ -110,8 +112,10 @@ server.config.json
 
 | Value | Role |
 | ---: | :--- |
-| `server.host` | Host the server will listen to. Set it to `0.0.0.0` if you want your server to listen to all routes, or `127.0.0.1` if you are behind a reverse proxy |
-| `server.port` | The port the server will listen to |
+| `server.listenTarget` | Select whether server should listen on a socket or a port, can be `port` or `socket` |
+| `server.host` | Host the server will listen to. Set it to `0.0.0.0` if you want your server to listen to all routes, or `127.0.0.1` if you are behind a reverse proxy (**Necessary when `listenTarget` is set to `port`**) |
+| `server.port` | The port the server will listen to (**Necessary when `listenTarget` is set to `port`**) |
+| `server.socket` | The path of the socket into which the server will write, the user must have permission to access this file (**Necessary when `listenTarget` is set to `socket`**)
 | `server.version` | Value automatically appended to all API routes, e.g. `http://localhost:4000/api/v1/movies` |
 | `server.frontendOrigin` | Used by the `Access-Control` to limit the origin of requests. It should be set to the frontend host, e.g. `https://porygon.example.com` |
 | `server.logLevel` | Log level for the server logger, can be set to `"debug"`, `"info"`, `"warning"`, `"error"` |
@@ -152,6 +156,8 @@ set the database and optionnal keycloak config files and a `/logs` volume to sto
 
 For this reason, the `server.logDirectory` should be set to `/logs` in order for the logs to be visible 
 outside the container
+
+A third volume `/socket` is also available if the container should expose a socket instead of a port. In this case, the `server.socket` should be set to `/socket/<yoursocket>.sock`.
 
 If necessary to access the database, the host networking can be used with the flag `--network="host"`.
 
