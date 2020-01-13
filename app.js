@@ -1,5 +1,7 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
+const yaml = require('js-yaml');
 const morgan = require('morgan');
 const log4js = require('log4js');
 const bodyParser = require('body-parser');
@@ -7,7 +9,7 @@ const session = require('express-session');
 const Keycloak = require('keycloak-connect');
 const request = require('request');
 const MySQLSessionStore = require('express-mysql-session')(session);
-const ExpressSwagger = require('express-swagger-generator');
+const SwaggerUI = require('express-swaggerize-ui');
 const rfs = require('rotating-file-stream');
 const Package = require('./package.json');
 
@@ -22,6 +24,7 @@ let keycloakConfig = {};
 let mySQLConfig = {};
 let sessionStore = {};
 let accessLogStream = {};
+const SwaggerFile = './doc/swagger.yml';
 
 const logLevel = process.env.LOG_LEVEL || config.server.logLevel || 'info';
 const logDirectory = config.server.logDirectory || 'logs';
@@ -98,7 +101,6 @@ logger.debug('Routes loaded');
 
 const app = express();
 
-const expressSwagger = ExpressSwagger(app);
 
 // session in production environment
 if (env === 'production') {
@@ -115,37 +117,6 @@ if (env === 'production') {
   }));
   logger.debug('Session handler created');
 }
-
-logger.debug('Creating Swagger handler');
-const swaggerOptions = {
-  swaggerDefinition: {
-    info: {
-      description: Package.description,
-      title: 'Documentation API',
-      version: Package.version,
-    },
-    host: `${config.doc.baseHost}`,
-    basePath: `/api/v${version}`,
-    produces: [
-      'application/json',
-      'application/xml',
-    ],
-    schemes: ['http', 'https'],
-    securityDefinitions: {
-      // JWT: {
-      //   type: 'apiKey',
-      //   in: 'header',
-      //   name: 'Authorization',
-      //   description: '',
-      // },
-    },
-  },
-  basedir: __dirname, // app absolute path
-  files: ['./routes/**/*.js'], // Path to the API handle folder
-};
-
-expressSwagger(swaggerOptions);
-logger.debug('Swagger handler created');
 
 logger.debug('Initializing application');
 const router = express.Router();
@@ -242,6 +213,15 @@ app.use((req, res, next) => {
     });
   }
 });
+
+// set route for api doc
+app.use('/api-docs.json', (req, res) => {
+  const swaggerContent = fs.readFileSync(SwaggerFile, 'utf8');
+  const data = yaml.safeLoad(swaggerContent);
+  data.info.version = Package.version;
+  res.json(data);
+});
+app.use('/api-docs', SwaggerUI());
 
 // set base route to access API
 app.use(`/api/v${version}`, router);

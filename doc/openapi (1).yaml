@@ -1,0 +1,219 @@
+openapi: 3.0.0
+info:
+  description: "This API handles a collection of movies and series for easy ordering along locations, type, categories."
+  version: "0.3.3"
+  title: "Porygon API"
+  contact:
+    name: "Aurélien Hugues"
+    email: "me@aurelienhugues.com"
+  license:
+    name: "MIT"
+    url: "https://opensource.org/licenses/MIT"
+
+servers:
+  - url: http://localhost:4000/api/v1
+    description: Dev server
+  - url: https://api.porygon.aurelienhugues.com
+    description: Production server
+
+components:
+  schemas:
+    StatusMessage:
+      properties:
+        code:
+          type: integer
+        userMessage:
+          type: string
+      required:
+        - code
+        - userMessage
+    OutputCategory:
+      properties:
+        id:
+          type: integer
+        label:
+          type: string
+        description:
+          type: string
+      required:
+        - id
+        - label
+        - description
+    InputCategory:
+      properties:
+        label:
+          type: string
+        description:
+          type: string
+      required:
+        - label
+
+paths:
+  /categories:
+    get:
+      summary: Get list of categories
+      description: Get the full list of categories with optional query parameters to limit the search
+      parameters:
+        - in: query
+          name: 'attributes'
+          description: List of attributes to return, separated by a comma
+          schema:
+            type: array
+            items:
+              enum:
+                - label
+                - description
+                - id
+              type: string
+          style: form
+          explode: false
+        - in: query
+          name: label
+          description: Search parameter for the label
+          schema:
+            type: string
+        - in: query
+          name: sort
+          description: Order to use for sorting
+          schema:
+            type: string
+          examples:
+            label:
+              value: +label
+              summary: Ascending order along label
+            description:
+              value: -description
+              summary: Descending order along description
+      responses:
+        '200':
+          description: A JSON array of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OutputCategory'
+    post:
+      summary: Create a new category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputCategory'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 201
+                userMessage: 'Category successfully created'
+        '400':
+          description: Invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 400
+                userMessage: "Invalid field 'toto' in query"
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <!DOCTYPE html>
+                    <html>
+                    
+                      <head>
+                        <title></title>
+                        <link rel="stylesheet" href="/stylesheets/style.css">
+                      </head>
+                      
+                      <body>
+                        <h1>Unauthorized field 'toto' in query</h1>
+                        <h2>400</h2>
+                        <pre></pre>
+                      </body>
+                  
+                  </html>
+        '500':
+          description: Unexpected error
+  /categories/{categoryId}:
+    get:
+      summary: Get specific category
+      description: Get a category by its ID
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          description: ID of the category to get
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputCategory'
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 404
+                userMessage: "Category with id 42 not found"
+        '500':
+          description: Unexpected error
+    put:
+      summary: Modify a category
+      description: Modify the category with given id
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          description: ID of the category to get
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '205':
+          description: Category modified
+        '204':
+          description: Category not modified
+        '404':
+          description: Category does not exist
+        '400':
+          description: Invalid field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 400
+                userMessage: "Invalid field 'toto' in query"
+    delete:
+      summary: Delete a category
+      description: Delete the category with given id
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          description: ID of the category to get
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '204':
+          description: Category successfully deleted
+        '404':
+          description: Category does not exist
