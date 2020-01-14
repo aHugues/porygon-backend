@@ -18,7 +18,7 @@ const AUTHORIZED_FIELDS = [
   'is_dvd',
   'is_bluray',
   'is_digital',
-  'category_id',
+  'categories',
 ];
 
 const service = {};
@@ -80,12 +80,33 @@ const getAllSeries = (query) => {
       .offset(offset)
       .limit(limit)
       .join('Location', 'Location.id', 'Serie.location_id')
-      .leftJoin('Category', 'Category.id', 'Serie.category_id')
+      .leftJoin('SerieCategoryMapping', 'SerieCategoryMapping.serieId', 'Serie.id')
+      .leftOuterJoin('Category', 'Category.id', 'SerieCategoryMapping.categoryId')
       .options({ nestTables: true })
       .select(attributes)
       .then((series) => {
-        logger.debug(`Found series ${JSON.stringify(series)}`);
-        obs.next(series);
+        let result = [];
+        const parsedIds = [];
+        series.forEach((serie) => {
+          if (parsedIds.includes(serie.Serie.id)) {
+            result = result.map((res) => {
+              if (res.Serie.id === serie.Serie.id) {
+                res.Categories.push(serie.Category);
+              }
+              return res;
+            });
+          } else {
+            const newSerie = serie;
+            const category = serie.Category;
+            newSerie.Categories = [category];
+            delete newSerie.Category;
+            delete newSerie.SerieCategoryMapping;
+            result.push(newSerie);
+            parsedIds.push(newSerie.Serie.id);
+          }
+        });
+        logger.debug(`Found series ${JSON.stringify(result)}`);
+        obs.next(result);
         obs.complete();
       })
       .catch((error) => {
@@ -102,7 +123,8 @@ const getSerieById = (id) => {
   const observable = rxjs.Observable.create((obs) => {
     knex('Serie').where('Serie.id', id)
       .join('Location', 'Location.id', 'Serie.location_id')
-      .leftJoin('Category', 'Category.id', 'Serie.category_id')
+      .leftJoin('SerieCategoryMapping', 'SerieCategoryMapping.serieId', 'Serie.id')
+      .join('Category', 'Category.id', 'SerieCategoryMapping.categoryId')
       .options({ nestTables: true })
       .then((serie) => {
         if (serie.length < 1) {
@@ -112,7 +134,10 @@ const getSerieById = (id) => {
         } else {
           const result = serie[0].Serie;
           result.location = serie[0].Location;
-          result.category = serie[0].Category;
+          result.categories = [];
+          serie.forEach((elt) => {
+            result.categories.push(elt.Category);
+          });
           logger.debug(`Found serie with id ${id}: ${JSON.stringify(result)}`);
           obs.next(result);
           obs.complete();
@@ -129,14 +154,36 @@ const getSerieById = (id) => {
 
 const createSerie = (fields) => {
   logger.debug(`Creating serie with fields ${JSON.stringify(fields)}`);
+  const categoryIds = (fields && fields.categories) ? fields.categories : [];
+  const updatedFields = fields;
+  if (updatedFields) updatedFields.categories = null;
+
   const observable = rxjs.Observable.create((obs) => {
-    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, updatedFields);
     if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
-    knex('Serie').insert(cleanup.removeNulls(fields))
+
+    knex('Serie').insert(cleanup.removeNulls(updatedFields))
       .then((instance) => {
-        logger.debug('Serie successfully created');
+        const serieId = instance[0];
         obs.next(instance);
-        obs.complete();
+        logger.debug(`Serie successfully created with ID ${serieId}`);
+        if (categoryIds.length === 0) obs.complete();
+        else {
+          const rows = [];
+          categoryIds.forEach((categoryId) => {
+            rows.push({ serieId, categoryId });
+          });
+
+          knex('SerieCategoryMapping').insert(rows)
+            .then(() => {
+              logger.debug('Mapping successfully created');
+              obs.complete();
+            })
+            .catch((error) => {
+              logger.error(`Error when adding mapping: ${JSON.stringify(error)}`);
+              obs.error(error);
+            });
+        }
       })
       .catch((error) => {
         logger.error(`Error when creating serie: ${JSON.stringify(error)}`);
@@ -148,20 +195,58 @@ const createSerie = (fields) => {
 
 
 const updateSerie = (id, fields) => {
+  logger.debug(`Updating serie with id ${id} using fields ${JSON.stringify(fields)}`);
+  const categoryIds = fields ? fields.categories : [];
+  const updatedFields = fields;
+  if (fields && fields.categories) updatedFields.categories = null;
+
   const observable = rxjs.Observable.create((obs) => {
-    logger.debug(`Updating serie with id ${id} using fields ${JSON.stringify(fields)}`);
-    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    let serieUpdated = false;
+    let mappingUpdated = false;
+
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, updatedFields);
     if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
-    knex('Serie').where('id', id).update(cleanup.removeNulls(fields))
+
+    knex('Serie').where('id', id).update(cleanup.removeNulls(updatedFields))
       .then((affectedRows) => {
         logger.debug(affectedRows > 0 ? 'Serie successfully modified' : 'No modification');
         obs.next(affectedRows > 0);
-        obs.complete();
+        serieUpdated = true;
+        if (mappingUpdated) obs.complete();
       })
       .catch((error) => {
         logger.error(`Error when modifying serie: ${JSON.stringify(error)}`);
         obs.error(error);
       });
+
+    if (categoryIds) {
+      const rows = [];
+      categoryIds.forEach((categoryId) => {
+        rows.push({ serieId: id, categoryId });
+      });
+
+      knex('SerieCategoryMapping').where('serieId', id).delete()
+        .then(() => {
+          logger.debug(`Old categories for serie ${id} successfully deleted`);
+          knex('SerieCategoryMapping').insert(rows)
+            .then(() => {
+              logger.debug('Mapping successfully updated');
+              mappingUpdated = true;
+              if (serieUpdated) obs.complete();
+            })
+            .catch((error) => {
+              logger.error(`Error when adding mapping: ${JSON.stringify(error)}`);
+              obs.error(error);
+            });
+        })
+        .catch((error) => {
+          logger.error(`Error when removing old mapping: ${JSON.stringify(error)}`);
+          obs.error(error);
+        });
+    } else {
+      if (serieUpdated) obs.complete();
+      mappingUpdated = true;
+    }
   });
   return observable;
 };
@@ -169,14 +254,29 @@ const updateSerie = (id, fields) => {
 
 const deleteSerie = (id) => {
   logger.debug(`Deleting serie with id ${id}`);
+  let serieDeleted = false;
+  let mappingDeleted = false;
+
   const observable = rxjs.Observable.create((obs) => {
     knex('Serie').where('id', id).delete()
       .then(() => {
         logger.debug(`Serie ${id} successfully deleted`);
-        obs.complete();
+        serieDeleted = true;
+        if (mappingDeleted) obs.complete();
       })
       .catch((error) => {
         logger.error(`Error when deleting serie: ${JSON.stringify(error)}`);
+        obs.error(error);
+      });
+
+    knex('SerieCategoryMapping').where('serieId', id).delete()
+      .then(() => {
+        logger.debug(`Categories for serie ${id} successfully deleted`);
+        mappingDeleted = true;
+        if (serieDeleted) obs.complete();
+      })
+      .catch((error) => {
+        logger.error(`Error when removing old mapping: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });
