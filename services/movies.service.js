@@ -17,7 +17,7 @@ const AUTHORIZED_FIELDS = [
   'is_dvd',
   'is_bluray',
   'is_digital',
-  'category_id',
+  'categories',
   'french_title',
 ];
 
@@ -82,12 +82,34 @@ const getAllMovies = (query) => {
       .offset(offset)
       .limit(limit)
       .join('Location', 'Location.id', 'Movie.location_id')
-      .leftJoin('Category', 'Category.id', 'Movie.category_id')
+      .leftJoin('MovieCategoryMapping', 'MovieCategoryMapping.movieId', 'Movie.id')
+      .leftOuterJoin('Category', 'Category.id', 'MovieCategoryMapping.categoryId')
       .options({ nestTables: true })
       .select(attributes)
       .then((movies) => {
-        logger.debug(`Found movies ${JSON.stringify(movies)}`);
-        obs.next(movies);
+        let result = [];
+        const parsedIds = [];
+        movies.forEach((movie) => {
+          if (parsedIds.includes(movie.Movie.id)) {
+            result = result.map((res) => {
+              if (res.Movie.id === movie.Movie.id) {
+                res.Categories.push(movie.Category);
+              }
+              return res;
+            });
+          } else {
+            const newMovie = movie;
+            const category = movie.Category;
+            newMovie.Categories = [category];
+            delete newMovie.Category;
+            delete newMovie.MovieCategoryMapping;
+            result.push(newMovie);
+            parsedIds.push(newMovie.Movie.id);
+          }
+        });
+
+        logger.debug(`Found movies ${JSON.stringify(result)}`);
+        obs.next(result);
         obs.complete();
       })
       .catch((error) => {
@@ -104,7 +126,8 @@ const getMovieById = (id) => {
   const observable = rxjs.Observable.create((obs) => {
     knex('Movie').where('Movie.id', id)
       .join('Location', 'Location.id', 'Movie.location_id')
-      .leftJoin('Category', 'Category.id', 'Movie.category_id')
+      .leftJoin('MovieCategoryMapping', 'MovieCategoryMapping.movieId', 'Movie.id')
+      .join('Category', 'Category.id', 'MovieCategoryMapping.categoryId')
       .options({ nestTables: true })
       .then((movie) => {
         if (movie.length < 1) {
@@ -113,7 +136,10 @@ const getMovieById = (id) => {
         } else {
           const result = movie[0].Movie;
           result.location = movie[0].Location;
-          result.category = movie[0].Category;
+          result.categories = [];
+          movie.forEach((elt) => {
+            result.categories.push(elt.Category);
+          });
           logger.debug(`Found movie with id ${id}: ${JSON.stringify(result)}`);
           obs.next(result);
           obs.complete();
@@ -130,14 +156,36 @@ const getMovieById = (id) => {
 
 const createMovie = (fields) => {
   logger.debug(`Creating movie with fields ${JSON.stringify(fields)}`);
+  const categoryIds = (fields && fields.categories) ? fields.categories : [];
+  const updatedFields = fields;
+  if (updatedFields) updatedFields.categories = null;
+
   const observable = rxjs.Observable.create((obs) => {
-    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, updatedFields);
     if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
-    knex('Movie').insert(cleanup.removeNulls(fields))
+
+    knex('Movie').insert(cleanup.removeNulls(updatedFields))
       .then((instance) => {
-        logger.debug('Movie successfully created');
+        const movieId = instance[0];
         obs.next(instance);
-        obs.complete();
+        logger.debug(`Movie successfully created with ID ${movieId}`);
+        if (categoryIds.length === 0) obs.complete();
+        else {
+          const rows = [];
+          categoryIds.forEach((categoryId) => {
+            rows.push({ movieId, categoryId });
+          });
+
+          knex('MovieCategoryMapping').insert(rows)
+            .then(() => {
+              logger.debug('Mapping successfully created');
+              obs.complete();
+            })
+            .catch((error) => {
+              logger.error(`Error when adding mapping: ${JSON.stringify(error)}`);
+              obs.error(error);
+            });
+        }
       })
       .catch((error) => {
         logger.error(`Error when creating movie: ${JSON.stringify(error)}`);
@@ -150,19 +198,57 @@ const createMovie = (fields) => {
 
 const updateMovie = (id, fields) => {
   logger.debug(`Updating movie with id ${id} using fields ${JSON.stringify(fields)}`);
+  const categoryIds = fields ? fields.categories : [];
+  const updatedFields = fields;
+  if (fields && fields.categories) updatedFields.categories = null;
+
   const observable = rxjs.Observable.create((obs) => {
-    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, fields);
+    let movieUpdated = false;
+    let mappingUpdated = false;
+
+    const [valid, invalidField] = FieldsVerification.checkFields(AUTHORIZED_FIELDS, updatedFields);
     if (!valid) obs.error(FieldsVerification.createErrorInvalidField(invalidField));
-    knex('Movie').where('id', id).update(cleanup.removeNulls(fields))
+
+    knex('Movie').where('id', id).update(cleanup.removeNulls(updatedFields))
       .then((affectedRows) => {
         logger.debug(affectedRows > 0 ? 'Movie successfully modified' : 'No modification');
         obs.next(affectedRows > 0);
-        obs.complete();
+        movieUpdated = true;
+        if (mappingUpdated) obs.complete();
       })
       .catch((error) => {
         logger.error(`Error when modifying movie: ${JSON.stringify(error)}`);
         obs.error(error);
       });
+
+    if (categoryIds) {
+      const rows = [];
+      categoryIds.forEach((categoryId) => {
+        rows.push({ movieId: id, categoryId });
+      });
+
+      knex('MovieCategoryMapping').where('movieId', id).delete()
+        .then(() => {
+          logger.debug(`Old categories for movie ${id} successfully deleted`);
+          knex('MovieCategoryMapping').insert(rows)
+            .then(() => {
+              logger.debug('Mapping successfully updated');
+              mappingUpdated = true;
+              if (movieUpdated) obs.complete();
+            })
+            .catch((error) => {
+              logger.error(`Error when adding mapping: ${JSON.stringify(error)}`);
+              obs.error(error);
+            });
+        })
+        .catch((error) => {
+          logger.error(`Error when removing old mapping: ${JSON.stringify(error)}`);
+          obs.error(error);
+        });
+    } else {
+      if (movieUpdated) obs.complete();
+      mappingUpdated = true;
+    }
   });
   return observable;
 };
@@ -170,14 +256,29 @@ const updateMovie = (id, fields) => {
 
 const deleteMovie = (id) => {
   logger.debug(`Deleting movie with id ${id}`);
+  let movieDeleted = false;
+  let mappingDeleted = false;
+
   const observable = rxjs.Observable.create((obs) => {
     knex('Movie').where('id', id).delete()
       .then(() => {
         logger.debug(`Movie ${id} successfully deleted`);
-        obs.complete();
+        movieDeleted = true;
+        if (mappingDeleted) obs.complete();
       })
       .catch((error) => {
         logger.error(`Error when deleting movie: ${JSON.stringify(error)}`);
+        obs.error(error);
+      });
+
+    knex('MovieCategoryMapping').where('movieId', id).delete()
+      .then(() => {
+        logger.debug(`Categories for movie ${id} successfully deleted`);
+        mappingDeleted = true;
+        if (movieDeleted) obs.complete();
+      })
+      .catch((error) => {
+        logger.error(`Error when removing old mapping: ${JSON.stringify(error)}`);
         obs.error(error);
       });
   });

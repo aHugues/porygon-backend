@@ -76,22 +76,6 @@ describe('getAllMovies', () => {
     );
   });
 
-  it('correctly offsets the results', (done) => {
-    const searchQuery = {
-      attributes: '',
-      offset: 1,
-    };
-    moviesService.getAllMovies(searchQuery).subscribe(
-      (result) => {
-        expect(result.length).toBe(2);
-        expect(result[0].Movie.id).toBe(2);
-        expect(result[1].Movie.id).toBe(3);
-      },
-      (error) => expect(error).not.toBeDefined(),
-      () => done(),
-    );
-  });
-
   it('correctly orders the values by asc order', (done) => {
     const orderQuery = {
       attributes: '',
@@ -175,6 +159,8 @@ describe('getMovieById', () => {
 describe('createMovie', () => {
   afterAll(async (done) => {
     await knex('Movie').where('id', 4).delete();
+    await knex('Movie').where('id', 5).delete();
+    await knex('Movie').where('id', 6).delete();
     done();
   });
 
@@ -200,6 +186,25 @@ describe('createMovie', () => {
     );
   });
 
+  it('completes when categories are passed', (done) => {
+    const newMovie = {
+      location_id: 1,
+      title: 'Test movie',
+      remarks: 'This is a test',
+      is_bluray: 1,
+      duration: 42,
+      categories: [1, 2],
+    };
+    moviesService.createMovie(newMovie).subscribe(
+      (result) => {
+        expect(result.length).toBe(1);
+        expect(result[0]).toBe(5);
+      },
+      (error) => expect(error).not.toBeDefined(),
+      () => done(),
+    );
+  });
+
   it('fails when invalid values are passed', (done) => {
     const wrongMovie = {
       wrongField: true,
@@ -210,6 +215,29 @@ describe('createMovie', () => {
         expect(typeof error).toBe('object');
         expect(error.status).toBe(400);
         expect(error.message).toBe("Unauthorized field 'wrongField' in query");
+        done();
+      },
+    );
+  });
+
+  it('fails when invalid categories are passed', (done) => {
+    const wrongMovie = {
+      location_id: 1,
+      title: 'Test movie',
+      remarks: 'This is a test',
+      is_bluray: 1,
+      duration: 42,
+      categories: [{ toto: 'tata' }],
+    };
+    moviesService.createMovie(wrongMovie).subscribe(
+      (result) => {
+        expect(result.length).toBe(1);
+        expect(result[0]).toBe(6);
+      },
+      (error) => {
+        expect(typeof error).toBe('object');
+        expect(error.code).toBe('ER_BAD_FIELD_ERROR');
+        expect(error.sqlMessage).toBe("Unknown column 'toto' in 'field list'");
         done();
       },
     );
@@ -230,7 +258,7 @@ describe('updateMovie', () => {
     done();
   });
   afterAll(async (done) => {
-    await knex('Movie').where('id', 5).delete();
+    await knex('Movie').where('id', 7).delete();
     done();
   });
 
@@ -243,7 +271,7 @@ describe('updateMovie', () => {
       title: 'updated new title',
       is_digital: 1,
     };
-    moviesService.updateMovie(5, updatedMovie).subscribe(
+    moviesService.updateMovie(7, updatedMovie).subscribe(
       (result) => expect(result).toBe(true),
       (error) => expect(error).not.toBeDefined(),
       () => done(),
@@ -251,10 +279,10 @@ describe('updateMovie', () => {
   });
 
   it('has correctly updated the values', (done) => {
-    knex('Movie').where('id', 5).select()
+    knex('Movie').where('id', 7).select()
       .then((result) => {
         expect(result.length).toBe(1);
-        expect(result[0].id).toBe(5);
+        expect(result[0].id).toBe(7);
         expect(result[0].title).toBe('updated new title');
         expect(result[0].remarks).toBe('This is a test');
         expect(result[0].is_digital).toBe(1);
@@ -264,11 +292,34 @@ describe('updateMovie', () => {
       });
   });
 
+  it('completes when categories are passed', (done) => {
+    const updatedMovie = {
+      title: 'updated new title',
+      is_digital: 1,
+      categories: [1, 2],
+    };
+    moviesService.updateMovie(7, updatedMovie).subscribe(
+      (result) => expect(result).toBe(true),
+      (error) => expect(error).not.toBeDefined(),
+      () => done(),
+    );
+  });
+
+  it('has correctly updated the categories', (done) => {
+    knex('MovieCategoryMapping').where('movieId', 7).select()
+      .then((result) => {
+        expect(result.length).toBe(2);
+        expect(result[0].categoryId).toBe(1);
+        expect(result[1].categoryId).toBe(2);
+        done();
+      });
+  });
+
   it('knows when id has not been found', (done) => {
     const updatedMovie = {
       title: 'updated new movie',
     };
-    moviesService.updateMovie(6, updatedMovie).subscribe(
+    moviesService.updateMovie(8, updatedMovie).subscribe(
       (result) => expect(result).toBe(false),
       (error) => expect(error).not.toBeDefined(),
       () => done(),
@@ -279,12 +330,28 @@ describe('updateMovie', () => {
     const wrongMovie = {
       wrongField: true,
     };
-    moviesService.updateMovie(5, wrongMovie).subscribe(
+    moviesService.updateMovie(7, wrongMovie).subscribe(
       (result) => expect(result).not.toBeDefined(),
       (error) => {
         expect(typeof error).toBe('object');
         expect(error.status).toBe(400);
         expect(error.message).toBe("Unauthorized field 'wrongField' in query");
+        done();
+      },
+    );
+  });
+
+  it('fails when invalid categories are passed', (done) => {
+    const wrongMovie = {
+      title: 'yet another update',
+      categories: [{ toto: 'tata' }],
+    };
+    moviesService.updateMovie(7, wrongMovie).subscribe(
+      (result) => expect(result).toBe(true),
+      (error) => {
+        expect(typeof error).toBe('object');
+        expect(error.code).toBe('ER_BAD_FIELD_ERROR');
+        expect(error.sqlMessage).toBe("Unknown column 'toto' in 'field list'");
         done();
       },
     );
@@ -305,7 +372,7 @@ describe('deleteMovie', () => {
     done();
   });
   afterAll(async (done) => {
-    await knex('Movie').where('id', 6).delete();
+    await knex('Movie').where('id', 8).delete();
     done();
   });
 
@@ -314,7 +381,7 @@ describe('deleteMovie', () => {
   });
 
   it('has the expected data', (done) => {
-    knex('Movie').where('id', 6).select()
+    knex('Movie').where('id', 8).select()
       .then((result) => {
         expect(result.length).toBe(1);
         done();
@@ -322,7 +389,7 @@ describe('deleteMovie', () => {
   });
 
   it('completes when correct values are passed', (done) => {
-    moviesService.deleteMovie(6).subscribe(
+    moviesService.deleteMovie(8).subscribe(
       () => {},
       (error) => expect(error).not.toBeDefined(),
       () => done(),
@@ -330,7 +397,7 @@ describe('deleteMovie', () => {
   });
 
   it('has correctly deleted the element', (done) => {
-    knex('Movie').where('id', 6).select()
+    knex('Movie').where('id', 8).select()
       .then((result) => {
         expect(result.length).toBe(0);
         done();
