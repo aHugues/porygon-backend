@@ -66,8 +66,8 @@ const getCategoryById = (id) => {
           error.statusCode = 404;
           throw error;
         } else {
-          logger.debug(`Found category with id ${id}: ${JSON.stringify(rows)}`);
-          obs.next(rows);
+          logger.debug(`Found category with id ${id}: ${JSON.stringify(rows[0])}`);
+          obs.next(rows[0]);
           obs.complete();
         }
       })

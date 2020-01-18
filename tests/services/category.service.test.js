@@ -116,9 +116,9 @@ describe('getCategoryById', () => {
   it('correctly returns the expected category', (done) => {
     categoriesService.getCategoryById(1).subscribe(
       (result) => {
-        expect(result[0].id).toBe(1);
-        expect(result[0].label).toBe('test category 1');
-        expect(result[0].description).toBe('2- this is a first test category.');
+        expect(result.id).toBe(1);
+        expect(result.label).toBe('test category 1');
+        expect(result.description).toBe('2- this is a first test category.');
         done();
       },
       (error) => expect(error).not.toBeDefined(),
