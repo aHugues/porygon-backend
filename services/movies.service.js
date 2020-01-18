@@ -18,6 +18,7 @@ const AUTHORIZED_FIELDS = [
   'is_bluray',
   'is_digital',
   'categories',
+  'director',
   'french_title',
 ];
 
