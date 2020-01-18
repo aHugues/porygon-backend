@@ -248,7 +248,7 @@ app.use((err, req, res, next) => { // eslint-disable-line  no-unused-vars
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   // render the error page
-  res.status(err.status || 500);
+  res.status(err.status || err.statusCode || 500);
   logger.debug(`Returning error ${JSON.stringify(err)}`);
   res.render('error');
 });
