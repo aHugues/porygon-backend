@@ -133,6 +133,7 @@ const getMovieById = (id) => {
       .then((movie) => {
         if (movie.length < 1) {
           const error = new Error(`Movie with id ${id} not found.`);
+          error.statusCode = 404;
           throw error;
         } else {
           const result = movie[0].Movie;
