@@ -18,6 +18,38 @@ servers:
 
 components:
   schemas:
+    HealthStatus:
+      properties:
+        ApiVersion:
+          type: string
+          example: "0.4.1"
+        database:
+          type: object
+          description: Status of the database connection
+          properties:
+            configured:
+              description: True if the database is configured for the server
+              type: boolean
+            status:
+              description: True if the server is connected to the database
+              type: boolean
+        keycloak:
+          type: object
+          description: Status of the authentication backend
+          properties:
+            configured:
+              type: boolean
+              description: True if the authentication backend is configured for the server
+            used:
+              description: True if the authentication backend is in use
+              type: boolean
+            status:
+              description: True if the authentication backend is connected
+              type: boolean
+      required:
+        - ApiVersion
+        - database
+        - keycloak
     StatusMessage:
       properties:
         code:
@@ -49,6 +81,22 @@ components:
         - label
 
 paths:
+  /healthcheck:
+    get:
+      summary: Get server status
+      description: Get the current state of the server services status.
+      tags:
+        - meta
+      responses:
+        '200':
+          description: The current state of the server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '500':
+          description: Unexpected error
+
   /categories:
     get:
       summary: Get list of categories
