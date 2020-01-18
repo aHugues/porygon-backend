@@ -1,4 +1,4 @@
-FROM node:10
+FROM node:10-alpine
 
 WORKDIR /usr/src/app
 
@@ -18,7 +18,7 @@ VOLUME /config
 VOLUME /logs
 VOLUME /socket
 
-RUN npm install
+RUN npm install --production
 EXPOSE 4000
 
 CMD [ "node", "bin/www" ]
