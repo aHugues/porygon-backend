@@ -3,6 +3,9 @@
   "version": "0.4.1",
   "description": "REST API for the Porygon website",
   "private": true,
+  "engines": {
+    "node": ">=10"
+  },
   "scripts": {
     "start": "node ./bin/www",
     "migrate:test": "db-migrate --config config/database.config.json --env test up",

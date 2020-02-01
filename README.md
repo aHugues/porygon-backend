@@ -12,7 +12,7 @@ a Keycloak server.
 
 ### Prerequesites ###
 
-You need **Node.JS** (version 8 or later) and **MySQL** to install the application.
+You need **Node.JS** (version 10 or later) and **MySQL** to install the application.
 
 
 ### Installation Procedure ###
