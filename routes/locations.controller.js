@@ -6,95 +6,49 @@ const LocationsService = require('../services/locations.service');
 
 
 const getAllLocations = (req, res, next) => {
-  const onNext = (data) => {
-    res.json(data);
-  };
-  const onComplete = () => {};
-  const onError = (error) => {
-    next(error);
-  };
-
-  LocationsService.getAllLocations(req.query).subscribe(onNext, onError, onComplete);
+  LocationsService.getAllLocations()
+    .then((locations) => res.json(locations))
+    .catch((err) => next(err));
 };
 
 
 const createLocation = (req, res, next) => {
-  const onNext = () => {};
-  const onComplete = () => {
-    res.status(201).json({
-      code: 201,
-      userMessage: 'Location successfully created',
-    });
-  };
-  const onError = (error) => {
-    next(error);
-  };
-
-  LocationsService.createLocation(req.body).subscribe(onNext, onError, onComplete);
+  LocationsService.createLocation(req.body)
+    .then(() => {
+      res.status(201).json({
+        code: 201,
+        userMessage: 'Location successfully created',
+      });
+    })
+    .catch((err) => next(err));
 };
 
 
 const getLocationById = (req, res, next) => {
-  const onNext = (data) => {
-    res.json(data);
-  };
-  const onComplete = () => {
-    res.return('ok');
-  };
-  const onError = (error) => {
-    next(error);
-  };
-
-  LocationsService.getLocationById(req.params.id).subscribe(onNext, onError, onComplete);
+  LocationsService.getLocationById(req.params.id)
+    .then((location) => res.json(location))
+    .catch((err) => next(err));
 };
 
 
 const countForLocation = (req, res, next) => {
-  const result = {
-    movies: 0,
-    series: 0,
-  };
-
-  const onNext = (data) => {
-    [, result[data[0]]] = data;
-  };
-  const onError = (error) => {
-    next(error);
-  };
-  const onComplete = () => {
-    res.json(result);
-  };
-
-  LocationsService.countForLocation(req.params.id).subscribe(onNext, onError, onComplete);
+  LocationsService.countForLocation(req.params.id)
+    .then((count) => res.json(count))
+    .catch((err) => next(err));
 };
 
 
 const updateLocation = (req, res, next) => {
-  const onNext = (modified) => {
-    if (modified) {
-      res.status(205).send();
-    } else {
-      res.status(204).send();
-    }
-  };
-  const onComplete = () => {};
-  const onError = (error) => {
-    next(error);
-  };
-
-  LocationsService.updateLocation(req.params.id, req.body).subscribe(onNext, onError, onComplete);
+  LocationsService.updateLocation(req.params.id, req.body)
+    .then((modified) => res.status(modified ? 205 : 204).send())
+    .catch((err) => next(err));
 };
 
 
 const deleteLocation = (req, res, next) => {
-  const onNext = () => {};
-  const onComplete = () => {
-    res.status(204).send();
-  };
-  const onError = (error) => {
-    next(error);
-  };
-  LocationsService.deleteLocation(req.params.id).subscribe(onNext, onError, onComplete);
+  LocationsService.deleteLocation(req.params.id)
+    .then(() => res.status(204).send())
+    .catch((err) => next(err));
 };
 
 
