@@ -79,6 +79,29 @@ components:
           type: string
       required:
         - label
+    OutputLocation:
+      properties:
+        id:
+          type: integer
+        location:
+          type: string
+        is_physical:
+          description: True if the location is physical, False if digital
+          type: boolean
+      required:
+        - id
+        - location
+        - is_physical
+    InputLocation:
+      properties:
+        location:
+          type: string
+        is_physical:
+          description: True if the location is physical, False if digital
+          type: boolean
+      required:
+        - location
+        - is_physical
 
 paths:
   /healthcheck:
@@ -286,3 +309,193 @@ paths:
           description: Category successfully deleted
         '404':
           description: Category does not exist
+
+  /locations:
+    get:
+      summary: Get list of locations
+      description: Get the full list of locations with optional query parameters to limit the search
+      tags:
+        - locations
+      parameters:
+        - in: query
+          name: 'attributes'
+          description: List of attributes to return, separated by a comma
+          schema:
+            type: array
+            items:
+              enum:
+                - id
+                - location
+                - is_physical
+              type: string
+          style: form
+          explode: false
+        - in: query
+          name: location
+          description: Search parameter for the location
+          schema:
+            type: string
+        - in: query
+          name: sort
+          description: Order to use for sorting
+          schema:
+            type: string
+          examples:
+            label:
+              value: +location
+              summary: Ascending order along location
+            description:
+              value: -id
+              summary: Descending order along id
+      responses:
+        '200':
+          description: A JSON array of locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OutputLocation'
+        '400':
+          description: Invalid field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 400
+                userMessage: "Invalid field 'toto' in query"
+        '500':
+          description: Unexpected error
+    post:
+      summary: Create a new location
+      tags:
+        - locations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputLocation'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 201
+                userMessage: 'Location successfully created'
+        '400':
+          description: Invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 400
+                userMessage: "Invalid field 'toto' in query"
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <!DOCTYPE html>
+                    <html>
+                    
+                      <head>
+                        <title></title>
+                        <link rel="stylesheet" href="/stylesheets/style.css">
+                      </head>
+                      
+                      <body>
+                        <h1>Unauthorized field 'toto' in query</h1>
+                        <h2>400</h2>
+                        <pre></pre>
+                      </body>
+                  
+                  </html>
+        '500':
+          description: Unexpected error
+  /locations/{locationId}:
+    get:
+      summary: Get specific location
+      description: Get a category by its ID
+      tags:
+        - locations
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          description: ID of the location to get
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputLocation'
+        '404':
+          description: Location not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 404
+                userMessage: "Location with id 42 not found"
+        '500':
+          description: Unexpected error
+    put:
+      summary: Modify a location
+      description: Modify the location with given id
+      tags:
+        - locations
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          description: ID of the location to edit
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '205':
+          description: Location modified
+        '204':
+          description: Location not modified
+        '404':
+          description: Location does not exist
+        '400':
+          description: Invalid field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 400
+                userMessage: "Invalid field 'toto' in query"
+    delete:
+      summary: Delete a location
+      description: Delete the location with given id
+      tags:
+        - locations
+      parameters:
+        - name: locationId
+          in: path
+          required: true
+          description: ID of the location to delete
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '204':
+          description: Location successfully deleted
+        '404':
+          description: Location does not exist
