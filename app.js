@@ -167,6 +167,16 @@ if (env === 'production') {
   logger.debug(`Linking to keycloak realm '${realmName}' on host '${keycloakHost}'`);
 }
 
+// set route for api doc
+app.use('/api-docs.json', (req, res) => {
+  const swaggerContent = fs.readFileSync(SwaggerFile, 'utf8');
+  const data = yaml.safeLoad(swaggerContent);
+  data.info.version = Package.version;
+  res.json(data);
+});
+app.use('/api-docs', SwaggerUI());
+
+
 app.use((req, res, next) => {
   // Bypass authentication on dev environment
   if (env !== 'production') {
@@ -213,15 +223,6 @@ app.use((req, res, next) => {
     });
   }
 });
-
-// set route for api doc
-app.use('/api-docs.json', (req, res) => {
-  const swaggerContent = fs.readFileSync(SwaggerFile, 'utf8');
-  const data = yaml.safeLoad(swaggerContent);
-  data.info.version = Package.version;
-  res.json(data);
-});
-app.use('/api-docs', SwaggerUI());
 
 // set base route to access API
 app.use(`/api/v${version}`, router);
