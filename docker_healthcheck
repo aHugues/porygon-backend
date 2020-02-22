@@ -1,0 +1,28 @@
+#!/bin/sh
+
+echo "Starting healthcheck"
+
+# Check if server is using port or socket
+listen_target=$(cat /config/server.config.json | grep "\"listenTarget\":" | awk -F ':' '{ print $2; }' | tr -d ",' \"")
+echo "Server running in $listen_target mode"
+
+# Get expected API Version
+package_version=$(cat /usr/src/app/package.json | grep "\"version\":" | awk -F ':' '{ print $2; }' | tr -d ",' \"")
+echo "Server running version $package_version"
+
+if [ $listen_target == 'port' ]
+then
+    listen_port=$(cat /config/server.config.json | grep "\"port\":" | awk -F ':' '{ print $2; }' | tr -d ",' \"")
+    server_target="http://localhost:$listen_port/api/v1/healthcheck"
+
+    echo "Sending HTTP request to host $server_target"
+    curl -f $server_target -I | grep "Porygon-API-Version: $package_version" || exit 1  
+else
+    socket_target=$(cat /config/server.config.json | grep "\"socket\":" | awk -F ':' '{ print $2; }' | tr -d ",' \"")
+
+    echo "Sending HTTP request to socket $socket_target"
+    { printf "GET /api/v1/healthcheck HTTP/1.1\r\n\r\n"; sleep 0.5; } | nc -U $socket_target -q 0 | grep "Porygon-API-Version: $package_version"  || exit 1
+fi
+
+echo "Check successful"
+exit 0

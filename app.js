@@ -186,6 +186,9 @@ app.use((req, res, next) => {
   } else if (req.method === 'OPTIONS') {
     logger.debug('Request is `OPTION` - authentication ignored.');
     next();
+  } else if (req.url === '/api/v1/healthcheck') {
+    logger.debug('Request is a Healthcheck - authentication ignored');
+    next();
   } else if (req.headers.authorization) {
     // Check if cookie is still valid:
     if (req.session !== undefined && req.session.cookie.maxAge > 0 && req.session.verified) {
