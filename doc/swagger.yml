@@ -313,40 +313,9 @@ paths:
   /locations:
     get:
       summary: Get list of locations
-      description: Get the full list of locations with optional query parameters to limit the search
+      description: Get the full list of locations
       tags:
         - locations
-      parameters:
-        - in: query
-          name: 'attributes'
-          description: List of attributes to return, separated by a comma
-          schema:
-            type: array
-            items:
-              enum:
-                - id
-                - location
-                - is_physical
-              type: string
-          style: form
-          explode: false
-        - in: query
-          name: location
-          description: Search parameter for the location
-          schema:
-            type: string
-        - in: query
-          name: sort
-          description: Order to use for sorting
-          schema:
-            type: string
-          examples:
-            label:
-              value: +location
-              summary: Ascending order along location
-            description:
-              value: -id
-              summary: Descending order along id
       responses:
         '200':
           description: A JSON array of locations
@@ -356,15 +325,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/OutputLocation'
-        '400':
-          description: Invalid field
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StatusMessage'
-              example:
-                code: 400
-                userMessage: "Invalid field 'toto' in query"
         '500':
           description: Unexpected error
     post:
