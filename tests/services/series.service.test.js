@@ -139,7 +139,7 @@ describe('getSerieById', () => {
         expect(result.id).toBe(1);
         expect(result.title).toBe('test Serie 1');
         expect(result.season).toBe(1);
-        expect(result.year).toBe(2012);
+        expect(result.year).toBe(2013);
         done();
       },
       (error) => expect(error).not.toBeDefined(),

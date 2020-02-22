@@ -38,6 +38,13 @@ const countForLocation = (req, res, next) => {
 };
 
 
+const countForLocations = (req, res, next) => {
+  LocationsService.countForLocations()
+    .then((count) => res.json(count))
+    .catch((err) => next(err));
+};
+
+
 const updateLocation = (req, res, next) => {
   LocationsService.updateLocation(req.params.id, req.body)
     .then((modified) => res.status(modified ? 205 : 204).send())
@@ -54,6 +61,7 @@ const deleteLocation = (req, res, next) => {
 
 router.get('/', getAllLocations);
 router.post('/', createLocation);
+router.get('/count/', countForLocations);
 router.get('/:id/count/', countForLocation);
 router.get('/:id', getLocationById);
 router.put('/:id', updateLocation);
