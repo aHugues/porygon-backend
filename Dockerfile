@@ -1,5 +1,7 @@
 FROM node:12-alpine
 
+RUN apk add netcat-openbsd curl
+
 WORKDIR /usr/src/app
 
 COPY . .
@@ -23,5 +25,8 @@ RUN rm -rf /tmp/* \
     && rm -rf /opt/yarn*
 
 EXPOSE 4000
+
+HEALTHCHECK --interval=120s --timeout=20s \
+    CMD /usr/src/app/docker_healthcheck || exit 1
 
 CMD [ "node", "bin/www" ]
