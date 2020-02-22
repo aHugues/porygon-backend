@@ -63,7 +63,41 @@ const deleteLocation = async (id) => {
 };
 
 
+const countForLocations = async () => {
+  logger.debug('Counting elements for all locations');
+  logger.debug('Getting mapping for movies');
+  const movieQueryRes = await knex('Movie')
+    .join('Location', 'Location.id', 'Movie.location_id')
+    .select('location_id', 'location')
+    .groupBy('location_id')
+    .count();
+  logger.debug('Getting mapping for series');
+  const serieQueryRes = await knex('Serie')
+    .join('Location', 'Location.id', 'Serie.location_id')
+    .select('location_id', 'location')
+    .groupBy('location_id')
+    .count();
+  logger.debug('Getting all locations');
+  const locations = await getAllLocations();
+
+  const movieIdCountMapping = {};
+  const serieIdCountMapping = {};
+  movieQueryRes.forEach((line) => { movieIdCountMapping[line.location_id] = line['count(*)']; });
+  serieQueryRes.forEach((line) => { serieIdCountMapping[line.location_id] = line['count(*)']; });
+
+  const result = locations.map((line) => ({
+    id: line.id,
+    location: line.location,
+    movie_count: movieIdCountMapping[line.id] || 0,
+    serie_count: serieIdCountMapping[line.id] || 0,
+  }));
+  return result;
+};
+
+
 const countForLocation = async (id) => {
+  logger.debug(`Getting information for location ${id}`);
+  const locationInfo = await getLocationById(id);
   logger.debug(`Counting elements in location ${id}`);
   const movieQueryRes = await knex('Movie').where('location_id', id).count();
   const nbMovies = movieQueryRes[0]['count(*)'];
@@ -71,9 +105,12 @@ const countForLocation = async (id) => {
   const serieQueryRes = await knex('Serie').where('location_id', id).count();
   const nbSeries = serieQueryRes[0]['count(*)'];
   logger.debug(`Found ${nbSeries} series`);
+
   return {
-    movies: nbMovies,
-    series: nbSeries,
+    id,
+    location: locationInfo[0].location,
+    movie_count: nbMovies,
+    serie_count: nbSeries,
   };
 };
 
@@ -83,6 +120,7 @@ service.getLocationById = getLocationById;
 service.createLocation = createLocation;
 service.updateLocation = updateLocation;
 service.deleteLocation = deleteLocation;
+service.countForLocations = countForLocations;
 service.countForLocation = countForLocation;
 
 module.exports = service;

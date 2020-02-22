@@ -96,6 +96,7 @@ const locations = require('./routes/locations.controller');
 const movies = require('./routes/movies.controller');
 const series = require('./routes/series.controller');
 const categories = require('./routes/categories.controller');
+const stats = require('./routes/stats.controller');
 
 logger.debug('Routes loaded');
 
@@ -233,6 +234,7 @@ router.use('/locations', locations);
 router.use('/movies', movies);
 router.use('/series', series);
 router.use('/categories', categories);
+router.use('/stats', stats);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
