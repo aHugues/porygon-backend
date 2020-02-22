@@ -1,9 +1,15 @@
 tests
 .deploy
+config/.gitignore
 config/database.config.json
 config/keycloak.config.json
+logs
 .eslintrc
 .gitignore
 .travis.yml
 coverage
 node_modules
+codecov.yml
+docker_push
+Dockerfile
+.dockerignore
