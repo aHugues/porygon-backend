@@ -156,6 +156,7 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', true);
   res.header('Access-Control-Expose-Headers', 'Porygon-API-Version');
   res.header('Porygon-API-Version', Package.version || '1');
+  res.removeHeader('X-Powered-By');
   next();
 });
 
