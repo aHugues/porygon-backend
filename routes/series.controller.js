@@ -1,8 +1,76 @@
 const express = require('express');
+const Joi = require('@hapi/joi');
 
 const router = express.Router();
 
 const SeriesService = require('../services/series.service');
+
+
+const createSerieSchema = Joi.object({
+  location_id: Joi.number()
+    .min(0)
+    .integer()
+    .required(),
+  title: Joi.string()
+    .min(1)
+    .max(255)
+    .required(),
+  remarks: Joi.string()
+    .min(1)
+    .max(255),
+  year: Joi.number()
+    .integer()
+    .min(1900)
+    .max(2100)
+    .required(),
+  season: Joi.number()
+    .integer()
+    .min(0)
+    .max(100)
+    .required(),
+  episodes: Joi.number()
+    .integer()
+    .min(0)
+    .max(1000)
+    .required(),
+  is_bluray: Joi.bool(),
+  is_dvd: Joi.bool(),
+  is_digital: Joi.bool(),
+  category_id: Joi.number()
+    .integer()
+    .min(0),
+});
+
+
+const editSerieSchema = Joi.object({
+  location_id: Joi.number()
+    .min(0)
+    .integer(),
+  title: Joi.string()
+    .min(1)
+    .max(255),
+  remarks: Joi.string()
+    .min(1)
+    .max(255),
+  year: Joi.number()
+    .integer()
+    .min(1900)
+    .max(2100),
+  season: Joi.number()
+    .integer()
+    .min(0)
+    .max(100),
+  episodes: Joi.number()
+    .integer()
+    .min(0)
+    .max(1000),
+  is_bluray: Joi.bool(),
+  is_dvd: Joi.bool(),
+  is_digital: Joi.bool(),
+  category_id: Joi.number()
+    .integer()
+    .min(0),
+});
 
 
 const getAllSeries = (req, res, next) => {
@@ -32,18 +100,22 @@ const countSeries = (req, res, next) => {
 
 
 const createSerie = (req, res, next) => {
-  const onNext = () => {};
-  const onComplete = () => {
-    res.status(201).json({
-      code: 201,
-      userMessage: 'Serie successfully created',
-    });
-  };
-  const onError = (error) => {
-    next(error);
-  };
+  const { error, value } = createSerieSchema.validate(req.body);
+  if (error) next(error);
+  else {
+    const onNext = () => {};
+    const onComplete = () => {
+      res.status(201).json({
+        code: 201,
+        userMessage: 'Serie successfully created',
+      });
+    };
+    const onError = (serviceError) => {
+      next(serviceError);
+    };
 
-  SeriesService.createSerie(req.body).subscribe(onNext, onError, onComplete);
+    SeriesService.createSerie(value).subscribe(onNext, onError, onComplete);
+  }
 };
 
 
@@ -61,19 +133,23 @@ const getSerieById = (req, res, next) => {
 
 
 const updateSerie = (req, res, next) => {
-  const onNext = (modified) => {
-    if (modified) {
-      res.status(205).send();
-    } else {
-      res.status(204).send();
-    }
-  };
-  const onComplete = () => {};
-  const onError = (error) => {
-    next(error);
-  };
+  const { error, value } = editSerieSchema.validate(req.body);
+  if (error) next(error);
+  else {
+    const onNext = (modified) => {
+      if (modified) {
+        res.status(205).send();
+      } else {
+        res.status(204).send();
+      }
+    };
+    const onComplete = () => {};
+    const onError = (serviceError) => {
+      next(serviceError);
+    };
 
-  SeriesService.updateSerie(req.params.id, req.body).subscribe(onNext, onError, onComplete);
+    SeriesService.updateSerie(req.params.id, value).subscribe(onNext, onError, onComplete);
+  }
 };
 
 

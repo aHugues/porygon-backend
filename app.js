@@ -248,6 +248,20 @@ app.use((req, res, next) => {
   next(err);
 });
 
+// catch joi validation errors
+app.use((err, req, res, next) => {
+  if (err.name === 'ValidationError') {
+    logger.debug(`Caught validation error: '${err.details[0].message}'`);
+    const newError = {
+      message: 'Invalid format for data',
+      status: 400,
+    };
+    next(newError);
+  } else {
+    next(err);
+  }
+});
+
 // error handler
 app.use((err, req, res, next) => { // eslint-disable-line  no-unused-vars
   // set locals, only providing error in development

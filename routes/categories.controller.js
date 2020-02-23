@@ -1,8 +1,30 @@
 const express = require('express');
+const Joi = require('@hapi/joi');
 
 const router = express.Router();
 
 const CategoriesService = require('../services/categories.service');
+
+
+const createCategorySchema = Joi.object({
+  label: Joi.string()
+    .min(1)
+    .max(255)
+    .required(),
+  description: Joi.string()
+    .min(1)
+    .max(255),
+});
+
+
+const editCategorySchema = Joi.object({
+  label: Joi.string()
+    .min(1)
+    .max(255),
+  description: Joi.string()
+    .min(1)
+    .max(255),
+});
 
 
 const getAllCategories = (req, res, next) => {
@@ -19,18 +41,22 @@ const getAllCategories = (req, res, next) => {
 
 
 const createCategory = (req, res, next) => {
-  const onNext = () => {};
-  const onComplete = () => {
-    res.status(201).json({
-      code: 201,
-      userMessage: 'Category successfully created',
-    });
-  };
-  const onError = (error) => {
-    next(error);
-  };
+  const { error, value } = createCategorySchema.validate(req.body);
+  if (error) next(error);
+  else {
+    const onNext = () => {};
+    const onComplete = () => {
+      res.status(201).json({
+        code: 201,
+        userMessage: 'Category successfully created',
+      });
+    };
+    const onError = (serviceError) => {
+      next(serviceError);
+    };
 
-  CategoriesService.createCategory(req.body).subscribe(onNext, onError, onComplete);
+    CategoriesService.createCategory(value).subscribe(onNext, onError, onComplete);
+  }
 };
 
 
@@ -50,19 +76,23 @@ const getCategoryById = (req, res, next) => {
 
 
 const updateCategory = (req, res, next) => {
-  const onNext = (modified) => {
-    if (modified) {
-      res.status(205).send();
-    } else {
-      res.status(204).send();
-    }
-  };
-  const onComplete = () => {};
-  const onError = (error) => {
-    next(error);
-  };
+  const { error, value } = editCategorySchema.validate(req.body);
+  if (error) next(error);
+  else {
+    const onNext = (modified) => {
+      if (modified) {
+        res.status(205).send();
+      } else {
+        res.status(204).send();
+      }
+    };
+    const onComplete = () => {};
+    const onError = (serviceError) => {
+      next(serviceError);
+    };
 
-  CategoriesService.updateCategory(req.params.id, req.body).subscribe(onNext, onError, onComplete);
+    CategoriesService.updateCategory(req.params.id, value).subscribe(onNext, onError, onComplete);
+  }
 };
 
 

@@ -1,8 +1,26 @@
 const express = require('express');
+const Joi = require('@hapi/joi');
 
 const router = express.Router();
 
 const LocationsService = require('../services/locations.service');
+
+
+const createLocationSchema = Joi.object({
+  location: Joi.string()
+    .min(1)
+    .max(255)
+    .required(),
+  is_physical: Joi.bool().required(),
+});
+
+
+const editLocationSchema = Joi.object({
+  location: Joi.string()
+    .min(1)
+    .max(255),
+  is_physical: Joi.bool(),
+});
 
 
 const getAllLocations = (req, res, next) => {
@@ -13,14 +31,18 @@ const getAllLocations = (req, res, next) => {
 
 
 const createLocation = (req, res, next) => {
-  LocationsService.createLocation(req.body)
-    .then(() => {
-      res.status(201).json({
-        code: 201,
-        userMessage: 'Location successfully created',
-      });
-    })
-    .catch((err) => next(err));
+  const { error, value } = createLocationSchema.validate(req.body);
+  if (error) next(error);
+  else {
+    LocationsService.createLocation(value)
+      .then(() => {
+        res.status(201).json({
+          code: 201,
+          userMessage: 'Location successfully created',
+        });
+      })
+      .catch((err) => next(err));
+  }
 };
 
 
@@ -46,9 +68,13 @@ const countForLocations = (req, res, next) => {
 
 
 const updateLocation = (req, res, next) => {
-  LocationsService.updateLocation(req.params.id, req.body)
-    .then((modified) => res.status(modified ? 205 : 204).send())
-    .catch((err) => next(err));
+  const { error, value } = editLocationSchema.validate(req.body);
+  if (error) next(error);
+  else {
+    LocationsService.updateLocation(req.params.id, value)
+      .then((modified) => res.status(modified ? 205 : 204).send())
+      .catch((err) => next(err));
+  }
 };
 
 

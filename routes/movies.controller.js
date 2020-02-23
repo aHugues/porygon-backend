@@ -1,8 +1,85 @@
 const express = require('express');
+const Joi = require('@hapi/joi');
 
 const router = express.Router();
 
 const MoviesService = require('../services/movies.service');
+
+
+const createMovieSchema = Joi.object({
+  location_id: Joi.number()
+    .min(0)
+    .integer()
+    .required(),
+  title: Joi.string()
+    .min(1)
+    .max(255)
+    .required(),
+  remarks: Joi.string()
+    .min(1)
+    .max(255),
+  actors: Joi.string()
+    .min(1)
+    .max(255),
+  director: Joi.string()
+    .min(1)
+    .max(255),
+  year: Joi.number()
+    .integer()
+    .min(1900)
+    .max(2100)
+    .required(),
+  duration: Joi.number()
+    .integer()
+    .min(0)
+    .max(1000)
+    .required(),
+  is_bluray: Joi.bool(),
+  is_dvd: Joi.bool(),
+  is_digital: Joi.bool(),
+  category_id: Joi.number()
+    .integer()
+    .min(0),
+  french_title: Joi.string()
+    .min(1)
+    .max(255),
+});
+
+
+const editMovieSchema = Joi.object({
+  location_id: Joi.number()
+    .integer()
+    .min(0),
+  title: Joi.string()
+    .min(1)
+    .max(255),
+  remarks: Joi.string()
+    .min(1)
+    .max(255),
+  actors: Joi.string()
+    .min(1)
+    .max(255),
+  director: Joi.string()
+    .min(1)
+    .max(255),
+  year: Joi.number()
+    .integer()
+    .min(1900)
+    .max(2100),
+  duration: Joi.number()
+    .integer()
+    .min(0)
+    .max(1000),
+  is_bluray: Joi.bool(),
+  is_dvd: Joi.bool(),
+  is_digital: Joi.bool(),
+  category_id: Joi.number()
+    .integer()
+    .min(0),
+  french_title: Joi.string()
+    .min(1)
+    .max(255),
+});
 
 
 const getAllMovies = (req, res, next) => {
@@ -31,18 +108,22 @@ const countMovies = (req, res, next) => {
 
 
 const createMovie = (req, res, next) => {
-  const onNext = () => {};
-  const onComplete = () => {
-    res.status(201).json({
-      code: 201,
-      userMessage: 'Movie successfully created',
-    });
-  };
-  const onError = (error) => {
-    next(error);
-  };
+  const { error, value } = createMovieSchema.validate(req.body);
+  if (error) next(error);
+  else {
+    const onNext = () => {};
+    const onComplete = () => {
+      res.status(201).json({
+        code: 201,
+        userMessage: 'Movie successfully created',
+      });
+    };
+    const onError = (serviceError) => {
+      next(serviceError);
+    };
 
-  MoviesService.createMovie(req.body).subscribe(onNext, onError, onComplete);
+    MoviesService.createMovie(value).subscribe(onNext, onError, onComplete);
+  }
 };
 
 
@@ -60,19 +141,23 @@ const getMovieById = (req, res, next) => {
 
 
 const updateMovie = (req, res, next) => {
-  const onNext = (modified) => {
-    if (modified) {
-      res.status(205).send();
-    } else {
-      res.status(204).send();
-    }
-  };
-  const onComplete = () => {};
-  const onError = (error) => {
-    next(error);
-  };
+  const { error, value } = editMovieSchema.validate(req.body);
+  if (error) next(error);
+  else {
+    const onNext = (modified) => {
+      if (modified) {
+        res.status(205).send();
+      } else {
+        res.status(204).send();
+      }
+    };
+    const onComplete = () => {};
+    const onError = (serviceError) => {
+      next(serviceError);
+    };
 
-  MoviesService.updateMovie(req.params.id, req.body).subscribe(onNext, onError, onComplete);
+    MoviesService.updateMovie(req.params.id, value).subscribe(onNext, onError, onComplete);
+  }
 };
 
 
