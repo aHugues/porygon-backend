@@ -79,6 +79,92 @@ components:
           type: string
       required:
         - label
+    InputMovie:
+      properties:
+        title:
+          type: string
+        french_title:
+          type: string
+        remarks:
+          type: string
+        actors:
+          type: string
+          description: Comma-separated list of actors
+          example: John Doe, Jeanne Doe
+        director:
+          type: string
+        location_id:
+          type: integer
+          description: ID of the Location in which movie is stored
+        year:
+          type: integer
+        duration:
+          type: integer
+          description: Duration in minutes
+        categories:
+          type: array
+          items:
+            type: integer
+          description: List of the ids of all categories associated to this movie
+        is_dvd:
+          type: boolean
+        is_bluray:
+          type: boolean
+        is_digital:
+          type: boolean
+      required:
+        - title
+        - location_id
+        - year
+        - duration
+        - categories
+        - is_dvd
+        - is_bluray
+        - is_digital
+    OutputMovie:
+      properties:
+        title:
+          type: string
+        french_title:
+          type: string
+        remarks:
+          type: string
+        actors:
+          type: string
+          description: Comma-separated list of actors
+          example: John Doe, Jeanne Doe
+        director:
+          type: string
+        location:
+          $ref: '#/components/schemas/OutputLocation'
+        year:
+          type: integer
+        duration:
+          type: integer
+          description: Duration in minutes
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutputCategory'
+        is_dvd:
+          type: boolean
+        is_bluray:
+          type: boolean
+        is_digital:
+          type: boolean
+      required:
+        - title
+        - french_title
+        - remarks
+        - actors
+        - director
+        - location
+        - year
+        - duration
+        - categories
+        - is_dvd
+        - is_bluray
+        - is_digital
     OutputLocation:
       properties:
         id:
@@ -168,6 +254,170 @@ paths:
         '500':
           description: Unexpected error
 
+  /movies:
+    get:
+      summary: Get list of movies
+      description: Get the full list of movies
+      tags:
+        - movies
+      responses:
+        '200':
+          description: A JSON array of movies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OutputMovie'
+        '400':
+          description: Invalid field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 400
+                userMessage: "Invalid field 'toto' in query"
+        '500':
+          description: Unexpected error
+    post:
+      summary: Create a new movie
+      tags:
+        - movies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputMovie'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 201
+                userMessage: 'Movie successfully created'
+        '400':
+          description: Invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 400
+                userMessage: "Invalid field 'toto' in query"
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <!DOCTYPE html>
+                    <html>
+                    
+                      <head>
+                        <title></title>
+                        <link rel="stylesheet" href="/stylesheets/style.css">
+                      </head>
+                      
+                      <body>
+                        <h1>Unauthorized field 'toto' in query</h1>
+                        <h2>400</h2>
+                        <pre></pre>
+                      </body>
+                  
+                  </html>
+        '500':
+          description: Unexpected error
+  /movies/{movieId}:
+    get:
+      summary: Get specific movie
+      description: Get a movie by its ID
+      tags:
+        - movies
+      parameters:
+        - name: movieId
+          in: path
+          required: true
+          description: ID of the movie to get
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputMovie'
+        '404':
+          description: Movie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 404
+                userMessage: "Movie with id 42 not found"
+        '500':
+          description: Unexpected error
+    put:
+      summary: Modify a movie
+      description: Modify the movie with given id
+      tags:
+        - movies
+      parameters:
+        - name: movieId
+          in: path
+          required: true
+          description: ID of the movie to edit
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputMovie'
+      responses:
+        '205':
+          description: Movie modified
+        '204':
+          description: Movie not modified
+        '404':
+          description: Movie does not exist
+        '400':
+          description: Invalid field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 400
+                userMessage: "Invalid field 'toto' in query"
+    delete:
+      summary: Delete a movie
+      description: Delete the movie with given id
+      tags:
+        - movies
+      parameters:
+        - name: movieId
+          in: path
+          required: true
+          description: ID of the movie to delete
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '204':
+          description: Movie successfully deleted
+        '404':
+          description: Movie does not exist
   /categories:
     get:
       summary: Get list of categories
