@@ -165,6 +165,79 @@ components:
         - is_dvd
         - is_bluray
         - is_digital
+    InputSerie:
+      properties:
+        title:
+          type: string
+        remarks:
+          type: string
+        location_id:
+          type: integer
+          description: ID of the Location in which movie is stored
+        year:
+          type: integer
+        season:
+          type: integer
+        episodes:
+          type: integer
+          description: Number of episodes in the season
+        categories:
+          type: array
+          items:
+            type: integer
+          description: List of the ids of all categories associated to this movie
+        is_dvd:
+          type: boolean
+        is_bluray:
+          type: boolean
+        is_digital:
+          type: boolean
+      required:
+        - title
+        - location_id
+        - year
+        - season
+        - episodes
+        - categories
+        - is_dvd
+        - is_bluray
+        - is_digital
+    OutputSerie:
+      properties:
+        title:
+          type: string
+        remarks:
+          type: string
+        location:
+          $ref: '#/components/schemas/OutputLocation'
+        year:
+          type: integer
+        season:
+          type: integer
+        episodes:
+          type: integer
+          description: Number of episodes in the season
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutputCategory'
+        is_dvd:
+          type: boolean
+        is_bluray:
+          type: boolean
+        is_digital:
+          type: boolean
+      required:
+        - title
+        - remarks
+        - location
+        - year
+        - season
+        - episodes
+        - categories
+        - is_dvd
+        - is_bluray
+        - is_digital
     OutputLocation:
       properties:
         id:
@@ -418,6 +491,170 @@ paths:
           description: Movie successfully deleted
         '404':
           description: Movie does not exist
+  /series:
+    get:
+      summary: Get list of series
+      description: Get the full list of series
+      tags:
+        - series
+      responses:
+        '200':
+          description: A JSON array of series
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OutputSerie'
+        '400':
+          description: Invalid field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 400
+                userMessage: "Invalid field 'toto' in query"
+        '500':
+          description: Unexpected error
+    post:
+      summary: Create a new serie
+      tags:
+        - series
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputSerie'
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 201
+                userMessage: 'Serie successfully created'
+        '400':
+          description: Invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 400
+                userMessage: "Invalid field 'toto' in query"
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <!DOCTYPE html>
+                    <html>
+                    
+                      <head>
+                        <title></title>
+                        <link rel="stylesheet" href="/stylesheets/style.css">
+                      </head>
+                      
+                      <body>
+                        <h1>Unauthorized field 'toto' in query</h1>
+                        <h2>400</h2>
+                        <pre></pre>
+                      </body>
+                  
+                  </html>
+        '500':
+          description: Unexpected error
+  /series/{serieId}:
+    get:
+      summary: Get specific serie
+      description: Get a serie by its ID
+      tags:
+        - series
+      parameters:
+        - name: serieId
+          in: path
+          required: true
+          description: ID of the serie to get
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputSerie'
+        '404':
+          description: Serie not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 404
+                userMessage: "Serie with id 42 not found"
+        '500':
+          description: Unexpected error
+    put:
+      summary: Modify a serie
+      description: Modify the serie with given id
+      tags:
+        - series
+      parameters:
+        - name: serieId
+          in: path
+          required: true
+          description: ID of the serie to edit
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InputSerie'
+      responses:
+        '205':
+          description: Serie modified
+        '204':
+          description: Serie not modified
+        '404':
+          description: Serie does not exist
+        '400':
+          description: Invalid field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusMessage'
+              example:
+                code: 400
+                userMessage: "Invalid field 'toto' in query"
+    delete:
+      summary: Delete a serie
+      description: Delete the serie with given id
+      tags:
+        - series
+      parameters:
+        - name: serieId
+          in: path
+          required: true
+          description: ID of the serie to delete
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '204':
+          description: Serie successfully deleted
+        '404':
+          description: Serie does not exist
   /categories:
     get:
       summary: Get list of categories
