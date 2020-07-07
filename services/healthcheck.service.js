@@ -2,7 +2,6 @@ const request = require('request');
 const log4js = require('log4js');
 const Package = require('../package.json');
 const knex = require('./database.service');
-const keycloakConfig = require('../config/keycloak.config.json');
 const databaseConfig = require('../config/database.config.json');
 
 const service = {};
@@ -10,6 +9,21 @@ const service = {};
 const env = process.env.NODE_ENV || 'development';
 const logger = log4js.getLogger(env === 'development' ? 'dev' : 'prod');
 const ApiVersion = Package.version || 'Unknown';
+
+
+let keycloakConfig = {};
+try {
+  logger.debug('Loading Keycloak configuration for healthcheck');
+  keycloakConfig = require('../config/keycloak.config.json');
+} catch (err) {
+  if (env === 'production') {
+    logger.fatal(`Impossible to load Keycloak configuration: ${err.code}`)
+    process.kill(process.pid, 'SIGINT');
+  } else {
+    logger.warn(`Impossible to load Keycloak configuration : ${err.code}`);
+    logger.warn('This is not fatal since we are not in production mode');
+  }
+}
 
 const databaseConfigured = (
   typeof databaseConfig[env].host !== 'undefined'
