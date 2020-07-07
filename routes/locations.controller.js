@@ -4,6 +4,7 @@ const Joi = require('@hapi/joi');
 const router = express.Router();
 
 const LocationsService = require('../services/locations.service');
+const cleanup = require('../middlewares/cleanup');
 
 
 const createLocationSchema = Joi.object({
@@ -31,7 +32,7 @@ const getAllLocations = (req, res, next) => {
 
 
 const createLocation = (req, res, next) => {
-  const { error, value } = createLocationSchema.validate(req.body);
+  const { error, value } = createLocationSchema.validate(cleanup.removeNulls(req.body, true));
   if (error) next(error);
   else {
     LocationsService.createLocation(value)
