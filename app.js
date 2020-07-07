@@ -70,14 +70,6 @@ if (env === 'production') {
   logger.debug('Session store created');
 }
 
-// Instantiate Keycloak if in production environment
-if (env === 'production') {
-  logger.debug('Loading Keycloak config');
-  keycloakConfig = require('./config/keycloak.config.json'); // eslint-disable-line global-require
-  keycloak = new Keycloak({ store: session }, keycloakConfig);
-  logger.debug('Keycloak config loaded');
-}
-
 // Instantiate rotating log stream in production environment
 if (env === 'production') {
   logger.debug('Creating rotating filestream for access log');
@@ -87,6 +79,18 @@ if (env === 'production') {
     path: logDirectory,
   });
   logger.debug('Filestream created');
+}
+
+// Instantiate Keycloak if in production environment
+if (env === 'production') {
+  try {
+    logger.debug('Loading Keycloak config');
+    keycloakConfig = require('./config/keycloak.config.json'); // eslint-disable-line global-require
+    keycloak = new Keycloak({ store: session }, keycloakConfig);
+    logger.debug('Keycloak config loaded');
+  } catch (err) {
+    console.error(`Impossible to load Keycloak configuration: ${err.code}`)
+  }
 }
 
 // Import routes
