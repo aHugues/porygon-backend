@@ -4,6 +4,7 @@ const Joi = require('@hapi/joi');
 const router = express.Router();
 
 const SeriesService = require('../services/series.service');
+const cleanup = require('../middlewares/cleanup');
 
 
 const createSerieSchema = Joi.object({
@@ -36,6 +37,8 @@ const createSerieSchema = Joi.object({
   is_bluray: Joi.bool(),
   is_dvd: Joi.bool(),
   is_digital: Joi.bool(),
+  categories: Joi.array()
+    .items(Joi.number().integer()),
   category_id: Joi.number()
     .integer()
     .min(0),
@@ -67,6 +70,8 @@ const editSerieSchema = Joi.object({
   is_bluray: Joi.bool(),
   is_dvd: Joi.bool(),
   is_digital: Joi.bool(),
+  categories: Joi.array()
+    .items(Joi.number().integer()),
   category_id: Joi.number()
     .integer()
     .min(0),
@@ -100,7 +105,7 @@ const countSeries = (req, res, next) => {
 
 
 const createSerie = (req, res, next) => {
-  const { error, value } = createSerieSchema.validate(req.body);
+  const { error, value } = createSerieSchema.validate(cleanup.removeNulls(req.body, true));
   if (error) next(error);
   else {
     const onNext = () => {};
@@ -133,7 +138,7 @@ const getSerieById = (req, res, next) => {
 
 
 const updateSerie = (req, res, next) => {
-  const { error, value } = editSerieSchema.validate(req.body);
+  const { error, value } = editSerieSchema.validate(cleanup.removeNulls(req.body, true));
   if (error) next(error);
   else {
     const onNext = (modified) => {
