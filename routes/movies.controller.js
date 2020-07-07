@@ -4,6 +4,7 @@ const Joi = require('@hapi/joi');
 const router = express.Router();
 
 const MoviesService = require('../services/movies.service');
+const cleanup = require('../middlewares/cleanup');
 
 
 const createMovieSchema = Joi.object({
@@ -40,6 +41,8 @@ const createMovieSchema = Joi.object({
   category_id: Joi.number()
     .integer()
     .min(0),
+  categories: Joi.array()
+    .items(Joi.number().integer()),
   french_title: Joi.string()
     .min(1)
     .max(255),
@@ -76,6 +79,8 @@ const editMovieSchema = Joi.object({
   category_id: Joi.number()
     .integer()
     .min(0),
+  categories: Joi.array()
+    .items(Joi.number().integer()),
   french_title: Joi.string()
     .min(1)
     .max(255),
@@ -108,7 +113,7 @@ const countMovies = (req, res, next) => {
 
 
 const createMovie = (req, res, next) => {
-  const { error, value } = createMovieSchema.validate(req.body);
+  const { error, value } = createMovieSchema.validate(cleanup.removeNulls(req.body, true));
   if (error) next(error);
   else {
     const onNext = () => {};
@@ -141,7 +146,7 @@ const getMovieById = (req, res, next) => {
 
 
 const updateMovie = (req, res, next) => {
-  const { error, value } = editMovieSchema.validate(req.body);
+  const { error, value } = editMovieSchema.validate(cleanup.removeNulls(req.body, true));
   if (error) next(error);
   else {
     const onNext = (modified) => {

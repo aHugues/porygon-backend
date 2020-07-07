@@ -4,6 +4,7 @@ const Joi = require('@hapi/joi');
 const router = express.Router();
 
 const CategoriesService = require('../services/categories.service');
+const cleanup = require('../middlewares/cleanup');
 
 
 const createCategorySchema = Joi.object({
@@ -41,7 +42,7 @@ const getAllCategories = (req, res, next) => {
 
 
 const createCategory = (req, res, next) => {
-  const { error, value } = createCategorySchema.validate(req.body);
+  const { error, value } = createCategorySchema.validate(cleanup.removeNulls(req.body, true));
   if (error) next(error);
   else {
     const onNext = () => {};
@@ -76,7 +77,7 @@ const getCategoryById = (req, res, next) => {
 
 
 const updateCategory = (req, res, next) => {
-  const { error, value } = editCategorySchema.validate(req.body);
+  const { error, value } = editCategorySchema.validate(cleanup.removeNulls(req.body, true));
   if (error) next(error);
   else {
     const onNext = (modified) => {
