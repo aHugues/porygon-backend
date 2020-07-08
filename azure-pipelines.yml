@@ -63,13 +63,9 @@ stages:
   - job: build_docker
     displayName: 'Build docker image'
     steps:
-    - task: Docker@2
+    - script: docker build . -t ahugues/porygon-backend
       displayName: 'Build image'
-      inputs:
-        repository: ahugues/porygon-backend
-        command: build
-        Dockerfile: Dockerfile
-    - script: docker save -o $(Build.ArtifactStagingDirectory)/porygon-backend.tar ahugues/porygon-backend
+    - script: docker save -o $(Build.ArtifactStagingDirectory)/porygon-backend.tar ahugues/porygon-backend:latest
       displayName: 'Save image'
     - task: PublishBuildArtifacts@1
       displayName: 'Publish image to artifacts'
@@ -85,6 +81,11 @@ stages:
   - job: deploy_docker
     displayName: 'Deploy docker image'
     steps:
+    - task: Docker@2
+      displayName: 'Login to DockerHub'
+      inputs:
+        command: login
+        containerRegistry: docker-hub-ahugues
     - task: DownloadBuildArtifacts@0
       displayName: 'Download image from artifacts'
       inputs:
@@ -94,11 +95,9 @@ stages:
         downloadPath: '$(System.ArtifactsDirectory)'
     - script: docker load -i $(System.ArtifactsDirectory)/docker_artifacts/porygon-backend.tar
       displayName: 'Load docker image'
-    - task: Docker@2
-      displayName: 'Login to DockerHub'
-      inputs:
-        command: login
-        containerRegistry: docker-hub-ahugues
+    - script: docker tag ahugues/porygon-backend:latest ahugues/porygon-backend:master
+      displayName: 'Tag master image'
+      condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
     - task: Docker@2
       displayName: 'Push master image'
       condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
