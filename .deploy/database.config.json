@@ -2,9 +2,9 @@
     "test": {
         "client": "mysql",
         "driver": "mysql",
-        "password": "", 
+        "password": "azure", 
         "host": "localhost",
         "database": "porygonTest",
-        "user": "travis"
+        "user": "azure"
     }
 }

@@ -1,0 +1,113 @@
+trigger:
+- master
+- tag
+
+pr:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: build_test
+  displayName: 'Build and test'
+  jobs:
+  - job: unit_test
+    displayName: 'Run unit tests'
+    strategy:
+      matrix:
+        node_10:
+          node_version: '10.x'
+        node_12:
+          node_version: '12.x'
+        node_13:
+          node_version: '13.x'
+      maxParallel: 3
+    steps:
+    - script: sudo service mysql start
+      displayName: 'Start mysql service'
+    - task: MysqlDeploymentOnMachineGroup@1
+      inputs:
+        TaskNameSelector: InlineSqlTask
+        SqlInline: |
+          CREATE DATABASE IF NOT EXISTS porygonTest;
+          use porygonTest;
+          CREATE USER 'azure'@'localhost' IDENTIFIED BY 'azure';
+          GRANT ALL PRIVILEGES ON porygonTest.* TO 'azure'@'localhost';
+        ServerName: localhost
+        SqlUsername: root
+        SqlPassword: root
+      displayName: 'Install database'
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(node_version)
+      displayName: 'Install Node.js'
+    - script: |
+        npm install
+        sudo npm install -g db-migrate
+        sudo npm install -g codecov
+      displayName: 'Install dependencies'
+    - script: |
+        cp .deploy/database.config.json config/database.config.json
+        db-migrate db:create --config config/database.config.json --env test porygonTest
+        db-migrate --config config/database.config.json --env test up
+      displayName: 'Run database migrations'
+    - script: npm test
+      displayName: 'Run unit tests'
+    - script: codecov
+      displayName: 'Upload Coverage'
+      condition: and(succeeded(), eq(variables['node_version'], '12.x'))
+      env:
+        CODECOV_TOKEN: $(CODECOV_TOKEN)
+
+  - job: build_docker
+    displayName: 'Build docker image'
+    steps:
+    - task: Docker@2
+      displayName: 'Build image'
+      inputs:
+        repository: ahugues/porygon-backend
+        command: build
+        Dockerfile: Dockerfile
+    - script: docker save -o $(Build.ArtifactStagingDirectory)/porygon-backend.tar ahugues/porygon-backend
+      displayName: 'Save image'
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish image to artifacts'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: docker_artifacts
+
+
+- stage: deploy
+  displayName: 'Deploy'
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+  jobs:
+  - job: deploy_docker
+    displayName: 'Deploy docker image'
+    steps:
+    - task: DownloadBuildArtifacts@0
+      displayName: 'Download image from artifacts'
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'docker_artifacts'
+        downloadPath: '$(System.ArtifactsDirectory)'
+    - script: docker load -i $(System.ArtifactsDirectory)/docker_artifacts/porygon-backend.tar
+      displayName: 'Load docker image'
+    - task: Docker@2
+      displayName: 'Login to DockerHub'
+      inputs:
+        command: login
+        containerRegistry: docker-hub-ahugues
+    - task: Docker@2
+      displayName: 'Push master image'
+      condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+      inputs:
+        command: push
+        repository: ahugues/porygon-backend
+        containerRegistry: docker-hub-ahugues
+        tags: |
+          master
+    - script: bash docker_push 
+      displayName: 'Push tagged images to Docker Hub'
+      condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))

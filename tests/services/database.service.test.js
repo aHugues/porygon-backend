@@ -6,8 +6,8 @@ describe('Database service', () => {
     expect(config.client).toBe('mysql');
     expect(config.connection.database).toBe('porygonTest');
     expect(config.connection.host).toBe('localhost');
-    expect(config.connection.user).toBe('travis');
-    expect(config.connection.password).toBe('');
+    expect(config.connection.user).toBe('azure');
+    expect(config.connection.password).toBe('azure');
   });
 
   it('successfully connects to the database', async () => {
