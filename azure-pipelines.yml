@@ -99,6 +99,9 @@ stages:
       inputs:
         command: login
         containerRegistry: docker-hub-ahugues
+    - script: docker tag ahugues/porygon-backend ahugues/porygon-backend:master
+      displayName: 'Tag master image'
+      condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
     - task: Docker@2
       displayName: 'Push master image'
       condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))

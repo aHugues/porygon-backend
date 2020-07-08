@@ -2,11 +2,6 @@
 package_version=v$(npm version | grep "porygon-backend" | awk -F ':' '{ print $2; }' | tr -d ",' ")
 echo "Pushing docker images for version $package_version"
 
-# push latest master image
-echo "Pushing master image"
-docker tag ahugues/porygon-backend ahugues/porygon-backend:master
-docker push ahugues/porygon-backend:master
-
 $tags = git tag --sort=-creatordate
 $TAG = $tags[0]
 
