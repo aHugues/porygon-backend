@@ -2,7 +2,9 @@
 
 [![Version](https://img.shields.io/github/package-json/v/ahugues/porygon-backend)](https://github.com/aHugues/porygon-backend)
 [![Build Status](https://img.shields.io/azure-devops/build/aurelienhugues59/00b0c8a8-ba7d-422d-8782-20aa9ae35deb/1)](https://dev.azure.com/aurelienhugues59/Porygon)
+![Swagger Validator](https://img.shields.io/swagger/valid/3.0?specUrl=https%3A%2F%2Fraw.githubusercontent.com%2FaHugues%2Fporygon-backend%2Fmaster%2Fdoc%2Fswagger.yml)
 [![codecov](https://codecov.io/gh/aHugues/porygon-backend/branch/master/graph/badge.svg)](https://codecov.io/gh/aHugues/porygon-backend)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/a92cb3d262bf4a0592ceb6faacdf12fe)](https://www.codacy.com/manual/aHugues/porygon-backend?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=aHugues/porygon-backend&amp;utm_campaign=Badge_Grade)
 ![GitHub](https://img.shields.io/github/license/ahugues/porygon-backend)
 
 REST API Using Express to link the Porygon application to a SQL database with authentication using 
