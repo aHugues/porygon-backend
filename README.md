@@ -1,7 +1,7 @@
 # Backend REST API #
 
 [![Version](https://img.shields.io/github/package-json/v/ahugues/porygon-backend)](https://github.com/aHugues/porygon-backend)
-[![Build Status](https://travis-ci.org/aHugues/porygon-backend.svg?branch=master)](https://travis-ci.org/aHugues/porygon-backend)
+[![Build Status](https://img.shields.io/azure-devops/build/aurelienhugues59/00b0c8a8-ba7d-422d-8782-20aa9ae35deb/1)](https://dev.azure.com/aurelienhugues59/Porygon)
 [![codecov](https://codecov.io/gh/aHugues/porygon-backend/branch/master/graph/badge.svg)](https://codecov.io/gh/aHugues/porygon-backend)
 ![GitHub](https://img.shields.io/github/license/ahugues/porygon-backend)
 
