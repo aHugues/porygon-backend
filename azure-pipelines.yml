@@ -45,7 +45,7 @@ stages:
     - script: |
         npm install
         sudo npm install -g db-migrate
-        sudo npm install -g codecov
+        sudo npm install -g codecov@3.5
       displayName: 'Install dependencies'
     - script: |
         cp .deploy/database.config.json config/database.config.json
