@@ -1,0 +1,35 @@
+{
+    "compilerOptions": {
+      "module": "commonjs",
+      "strict": true,
+      "baseUrl": "./",
+      "outDir": "build",
+      "allowJs": true,
+      "resolveJsonModule": true,
+      "removeComments": true,
+      "experimentalDecorators": true,
+      "target": "es6",
+      "emitDecoratorMetadata": true,
+      "moduleResolution": "node",
+      "importHelpers": false,
+      "types": [
+        "node"
+      ],
+      "typeRoots": [
+        "node_modules/@types"
+      ]
+    },
+    "include": [
+      "./bin/**/*",
+      "./middleware/**/*",
+      "./routes/**/*",
+      "./services/**/*",
+      "./views/**/*",
+      "./config/**/*",
+      "./doc/**/*",
+      "./public/**/*",
+    ],
+    "exclude": [
+      "./src/public/"
+    ]
+}
