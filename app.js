@@ -86,6 +86,7 @@ const movies = require('./routes/movies.controller');
 const series = require('./routes/series.controller');
 const categories = require('./routes/categories.controller');
 const stats = require('./routes/stats.controller');
+const auth = require('./routes/auth.controller');
 
 logger.debug('Routes loaded');
 
@@ -159,28 +160,29 @@ app.use((req, res, next) => {
   } else if (req.url === '/api/v1/healthcheck') {
     logger.debug('Request is a Healthcheck - authentication ignored');
     next();
-  } else if (req.headers.authorization) {
+  } else if (req.url === '/login') {
+    logger.debug('Request is a login - authentication not required');
+    next();
+  } else {
     // Check if cookie is still valid:
-    if (req.session !== undefined && req.session.cookie.maxAge > 0 && req.session.verified) {
-      logger.debug(`Session is valid for ${req.session.cookie.maxAge} seconds`);
+    if (req.session !== undefined && req.session.cookie.maxAge > 0 && req.session.username !== undefined) {
+      logger.debug(`Session for user ${req.session.username} is valid for ${req.session.cookie.maxAge} seconds`);
       logger.debug('Session is valid, continuying.');
       next();
     } else {
-          // console.log(response);
-          logger.debug('Authorization is valid.');
-          req.session.verified = true;
-          next();
-        }
-  } else {
-    logger.debug('No authorization token provided.');
-    res.status(401).json({
-      error: 'unauthorized',
-    });
+      logger.debug('No Session provided.');
+      res.status(401).json({
+        error: 'unauthorized',
+      });
+    }
   }
 });
 
 // set base route to access API
 app.use(`/api/v${version}`, router);
+
+// register non-api routes
+app.use('/', auth);
 
 // register routes to use
 router.use('/', index);
