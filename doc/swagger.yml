@@ -33,23 +33,9 @@ components:
             status:
               description: True if the server is connected to the database
               type: boolean
-        keycloak:
-          type: object
-          description: Status of the authentication backend
-          properties:
-            configured:
-              type: boolean
-              description: True if the authentication backend is configured for the server
-            used:
-              description: True if the authentication backend is in use
-              type: boolean
-            status:
-              description: True if the authentication backend is connected
-              type: boolean
       required:
         - ApiVersion
         - database
-        - keycloak
     StatusMessage:
       properties:
         code:

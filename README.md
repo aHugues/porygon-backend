@@ -7,8 +7,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/a92cb3d262bf4a0592ceb6faacdf12fe)](https://www.codacy.com/manual/aHugues/porygon-backend?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=aHugues/porygon-backend&amp;utm_campaign=Badge_Grade)
 ![GitHub](https://img.shields.io/github/license/ahugues/porygon-backend)
 
-REST API Using Express to link the Porygon application to a SQL database with authentication using 
-a Keycloak server.
+REST API Using Express to link the Porygon application to a SQL database with local authentication.
 
 ## Installation ##
 
@@ -61,31 +60,7 @@ db-migrate --config config/database.config.json up
 
 ### Configure the authentication
 
-The application uses Keycloak for IAM and authentication. To link to your server, 
-download the JSON OpenID file and put it into the config folder: 
-
->Note: This step is not required if running in a development environment as authentication
-is automatically bypassed. 
-
-```json
-keycloak.config.json
----
-
-{
-    "realm": "<realm_name>",
-    "realm-public-key": "<realm_public_key",
-    "auth-server-url": "keycloak_url",
-    "ssl-required": "<ssl_required>",
-    "resource": "<client_id>",
-    "verify-token-audience": <token_audience_verified>,
-    "credentials": {
-      "secret": "<secret_key>"
-    },
-    "use-resource-role-mappings": <use_resource_role_mappings>,
-    "confidential-port": <confidential_port>,
-    "policy-enforcer": {}
-}
-```
+TODO: local config
 
 ### Configure the server
 
@@ -154,7 +129,7 @@ In `production` mode, logs output to three log files:
 ### Docker
 
 A Docker container is available at `ahugues/porygon-backend`. It uses a volume called `/config` to 
-set the database and optionnal keycloak config files and a `/logs` volume to store the log files. 
+set the database access configuration and a `/logs` volume to store the log files. 
 
 For this reason, the `server.logDirectory` should be set to `/logs` in order for the logs to be visible 
 outside the container

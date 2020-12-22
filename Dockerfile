@@ -14,7 +14,6 @@ COPY docker_healthcheck .
 
 RUN mkdir /config \
     && ln -s /config/database.config.json /usr/src/app/build/config/database.config.json \
-    && ln -s /config/keycloak.config.json /usr/src/app/build/config/keycloak.config.json \
     && rm /usr/src/app/build/config/server.config.json \
     && ln -s /config/server.config.json /usr/src/app/build/config/server.config.json
 
