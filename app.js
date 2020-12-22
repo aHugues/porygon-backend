@@ -6,7 +6,6 @@ const morgan = require('morgan');
 const log4js = require('log4js');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const Keycloak = require('keycloak-connect');
 const request = require('request');
 const MySQLSessionStore = require('express-mysql-session')(session);
 const SwaggerUI = require('express-swaggerize-ui');
@@ -19,8 +18,6 @@ const config = require('./config/server.config.json');
 // get the environment and the current API version
 const env = process.env.NODE_ENV || 'development';
 const version = config.server.version || 1;
-let keycloak = {};
-let keycloakConfig = {};
 let mySQLConfig = {};
 let sessionStore = {};
 let accessLogStream = {};
@@ -81,18 +78,6 @@ if (env === 'production') {
   logger.debug('Filestream created');
 }
 
-// Instantiate Keycloak if in production environment
-if (env === 'production') {
-  try {
-    logger.debug('Loading Keycloak config');
-    keycloakConfig = require('./config/keycloak.config.json'); // eslint-disable-line global-require
-    keycloak = new Keycloak({ store: session }, keycloakConfig);
-    logger.debug('Keycloak config loaded');
-  } catch (err) {
-    console.error(`Impossible to load Keycloak configuration: ${err.code}`)
-  }
-}
-
 // Import routes
 logger.debug('Loading routes');
 const index = require('./routes/index.controller');
@@ -130,17 +115,6 @@ const router = express.Router();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
-// uncomment after placing your favicon in /public
-// app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-// if (env === 'production') {
-//   logger.debug('Initializing Keycloak middleware');
-//   app.use(keycloak.middleware({
-//     logout: 'logout',
-//     admin: '/',
-//   }));
-//   logger.debug('Keycloak middleware initialized');
-// }
-
 logger.debug('Initializing requests logger');
 if (env === 'production') {
   app.use(morgan('combined', { stream: accessLogStream }));
@@ -163,15 +137,6 @@ app.use((req, res, next) => {
   res.removeHeader('X-Powered-By');
   next();
 });
-
-let keycloakHost = '';
-let realmName = '';
-
-if (env === 'production') {
-  keycloakHost = keycloakConfig.host;
-  realmName = keycloakConfig.realm;
-  logger.debug(`Linking to keycloak realm '${realmName}' on host '${keycloakHost}'`);
-}
 
 // set route for api doc
 app.use('/api-docs.json', (req, res) => {
@@ -201,30 +166,11 @@ app.use((req, res, next) => {
       logger.debug('Session is valid, continuying.');
       next();
     } else {
-      logger.debug('Checking authorization token with Keycloak');
-      const options = {
-        method: 'GET',
-        url: `https://${keycloakHost}/auth/realms/${realmName}/protocol/openid-connect/userinfo`,
-        headers: {
-          Authorization: req.headers.authorization,
-        },
-      };
-
-      request(options, (error, response) => {
-        if (error) throw new Error(error);
-        if (response.statusCode !== 200) {
-          logger.debug('Authorization is not valid.');
-          res.status(401).json({
-            error: 'unauthorized',
-          });
-        } else {
           // console.log(response);
           logger.debug('Authorization is valid.');
           req.session.verified = true;
           next();
         }
-      });
-    }
   } else {
     logger.debug('No authorization token provided.');
     res.status(401).json({

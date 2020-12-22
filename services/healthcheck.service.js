@@ -10,21 +10,6 @@ const env = process.env.NODE_ENV || 'development';
 const logger = log4js.getLogger(env === 'development' ? 'dev' : 'prod');
 const ApiVersion = Package.version || 'Unknown';
 
-
-let keycloakConfig = {};
-try {
-  logger.debug('Loading Keycloak configuration for healthcheck');
-  keycloakConfig = require('../config/keycloak.config.json');
-} catch (err) {
-  if (env === 'production') {
-    logger.fatal(`Impossible to load Keycloak configuration: ${err.code}`)
-    process.kill(process.pid, 'SIGINT');
-  } else {
-    logger.warn(`Impossible to load Keycloak configuration : ${err.code}`);
-    logger.warn('This is not fatal since we are not in production mode');
-  }
-}
-
 const databaseConfigured = (
   typeof databaseConfig[env].host !== 'undefined'
   && typeof databaseConfig[env].password !== 'undefined'
@@ -34,16 +19,6 @@ const databaseConfigured = (
 );
 let databaseConnectionStatus = false;
 logger.debug(`Database configuration: ${databaseConfigured ? 'ok' : 'error'}`);
-
-const keycloakActivated = env === 'production';
-const keycloakConfigured = (
-  typeof keycloakConfig.host !== 'undefined'
-  && typeof keycloakConfig.realm !== 'undefined'
-  && typeof keycloakConfig.credentials.secret !== 'undefined'
-);
-let keycloakConnectionStatus = false;
-logger.debug(`Keycloak configuration: ${keycloakConfigured ? 'ok' : 'error'}`);
-logger.debug(`Keycloak in use: ${keycloakActivated ? 'yes' : 'no'}`);
 
 const frequency = 10000;
 
@@ -62,21 +37,6 @@ function testDataBaseConnection() {
 }
 
 
-function testKeycloakConnection() {
-  const options = {
-    method: 'GET',
-    url: `https://${keycloakConfig.host}/auth/realms/${keycloakConfig.realm}`,
-  };
-  request(options, (error, response) => {
-    const newKeycloakStatus = (!error && response.statusCode === 200);
-    if (newKeycloakStatus !== keycloakConnectionStatus) {
-      logger.debug(`Keycloak Connection status changed to ${newKeycloakStatus ? 'ok' : 'error'}`);
-    }
-    keycloakConnectionStatus = newKeycloakStatus;
-  });
-}
-
-
 function returnStatus() {
   return {
     ApiVersion,
@@ -84,16 +44,10 @@ function returnStatus() {
       configured: databaseConfigured,
       status: databaseConnectionStatus,
     },
-    keycloak: {
-      configured: keycloakConfigured,
-      used: keycloakActivated,
-      status: keycloakConnectionStatus,
-    },
   };
 }
 
 setInterval(testDataBaseConnection, frequency);
-setInterval(testKeycloakConnection, frequency);
 
 service.returnStatus = returnStatus;
 
