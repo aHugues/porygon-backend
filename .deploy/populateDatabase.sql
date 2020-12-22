@@ -26,3 +26,8 @@ INSERT INTO SerieCategoryMapping
 VALUES  (null, 1, 1),
         (null, 1, 2),
         (null, 2, 2);
+
+
+INSERT INTO User(uuid, login, password, firstName, lastName, email)
+VALUES  ('abcd-efgh-1234-5647', 'user1', 'password1', 'User', 'One', 'user1@email.com'),
+        ('9876-azer-tyui-1337', 'user2', 'password2', 'User', 'Two', 'user2@email.com');

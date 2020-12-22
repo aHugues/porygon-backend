@@ -27,8 +27,21 @@ function checkFields(authorizedFields, fields) {
   return [valid, returnedField];
 }
 
+function checkNewUser(user) {
+  let valid = true
+  const neededFields = ['login', 'firstName', 'lastName', 'password'];
+  const providedFields = Object.keys(user);
+  neededFields.forEach((field) => {
+    if (!providedFields.includes(field)) {
+      valid = false
+    }
+  }, neededFields)
+  return valid
+}
+
 
 middleware.createErrorInvalidField = createErrorInvalidField;
 middleware.checkFields = checkFields;
+middleware.checkNewUser = checkNewUser;
 
 module.exports = middleware;

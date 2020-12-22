@@ -32,3 +32,35 @@ describe('checkFields', () => {
     expect(returnedField).toBe('error');
   });
 });
+
+
+describe('checkNewUser', () => {
+  it('Works when all necessary fields are provided', () => {
+    const user = {
+      firstName: 'john',
+      lastName: 'doe',
+      login: 'toto',
+      password: 'bloup',
+    }
+    expect(FieldsVerification.checkNewUser(user)).toBe(true);
+  });
+  it('Works even when more fields are provided', () => {
+    const user = {
+      firstName: 'john',
+      lastName: 'doe',
+      login: 'toto',
+      password: 'bloup',
+      email: 'test@email.com'
+    }
+    expect(FieldsVerification.checkNewUser(user)).toBe(true);
+  });
+  it('Fails when a necessary field is not provided', () => {
+    const user = {
+      firstName: 'john',
+      lastName: 'doe',
+      login: 'toto',
+      email: 'test@email.com'
+    }
+    expect(FieldsVerification.checkNewUser(user)).toBe(false);
+  });
+});
