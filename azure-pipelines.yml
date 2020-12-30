@@ -76,7 +76,7 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy'
-  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+  condition: and(succeeded(), or(eq(variables['build.sourceBranch'], 'refs/heads/master'), startsWith(variables['build.sourceBranch'], 'refs/tags/')))
   jobs:
   - job: deploy_docker
     displayName: 'Deploy docker image'

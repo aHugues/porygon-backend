@@ -2,14 +2,13 @@
 package_version=v$(npm version | grep "porygon-backend" | awk -F ':' '{ print $2; }' | tr -d ",' ")
 echo "Pushing docker images for version $package_version"
 
-$tags = git tag --sort=-creatordate
-$TAG = $tags[0]
+TAG=$(git tag --sort=-creatordate | head -n 1)
 
 # # only tag latest and versionned image on tagged commit
 if [ -z "$TAG" ]
 then
-    echo "Not a tagged build, exiting..."
-    exit 0
+    >&2 echo "Not a tagged build, exiting..."
+    exit 1
 fi
 
 
