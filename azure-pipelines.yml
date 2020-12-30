@@ -1,6 +1,6 @@
 trigger:
 - master
-- tag
+- refs/tags/*
 
 pr:
 - master
