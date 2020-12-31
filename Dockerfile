@@ -11,6 +11,7 @@ RUN npm run build \
     && rm -rf * \
     && mv /tmp/build .
 COPY docker_healthcheck .
+COPY migrations ./build/migrations/
 
 RUN mkdir /config \
     && ln -s /config/database.config.json /usr/src/app/build/config/database.config.json \
