@@ -2,7 +2,9 @@ const rxjs = require('rxjs');
 const log4js = require('log4js');
 const knex = require('./database.service');
 const FieldsVerification = require('../middlewares/fields_verification');
+const config = require('../config/server.config.json')
 const cleanup = require('../middlewares/cleanup');
+const jwt = require('jsonwebtoken');
 
 const env = process.env.NODE_ENV || 'development';
 const logger = log4js.getLogger(env === 'development' ? 'dev' : 'prod');
@@ -69,7 +71,7 @@ const getUserInfo = (login) => {
   return observable;
 }
 
-const checkLogin = (login, password, saltRounds = 10) => {
+const checkLogin = (login, password, saltRounds = 10, secretKey = config.secretKey) => {
   const observable = rxjs.Observable.create((obs) => {
     knex('User').where('login', login).select()
       .then((rows) => {
@@ -78,12 +80,15 @@ const checkLogin = (login, password, saltRounds = 10) => {
           error.statusCode = 404;
           throw error;
         } else {
-          logger.debug(`Found user ${login}`)
+          logger.debug(`Found user ${login}`);
+          // TODO: for now this never expires, need to do the refreshToken part later
+          const accessToken = jwt.sign({ login: login, password: password }, secretKey);
           const returnedUser = {
             login: rows[0].login,
             firstName: rows[0].firstName,
             lastName: rows[0].lastName,
             email: rows[0].email,
+            token: accessToken,
           };
           if (bcrypt.compareSync(password, rows[0].password)) {
             obs.next(returnedUser);

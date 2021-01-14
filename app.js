@@ -5,11 +5,9 @@ const yaml = require('js-yaml');
 const morgan = require('morgan');
 const log4js = require('log4js');
 const bodyParser = require('body-parser');
-const session = require('express-session');
-const request = require('request');
-const MySQLSessionStore = require('express-mysql-session')(session);
 const SwaggerUI = require('express-swaggerize-ui');
 const rfs = require('rotating-file-stream');
+const jwt = require('jsonwebtoken');
 const Package = require('./package.json');
 
 // Config file
@@ -18,8 +16,6 @@ const config = require('./config/server.config.json');
 // get the environment and the current API version
 const env = process.env.NODE_ENV || 'development';
 const version = config.server.version || 1;
-let mySQLConfig = {};
-let sessionStore = {};
 let accessLogStream = {};
 const SwaggerFile = './doc/swagger.yml';
 
@@ -59,14 +55,6 @@ const logger = log4js.getLogger(env === 'production' ? 'prod' : 'dev');
 logger.info(`Starting Porygon version ${Package.version || 'unknown'} server in ${env} mode`);
 logger.info(`Authentication will be ${env === 'production' ? 'enabled' : 'disabled'}.`);
 
-// setup store in production environment
-if (env === 'production') {
-  logger.debug('Loading session store');
-  mySQLConfig = require('./config/database.config.json')[env]; // eslint-disable-line global-require
-  sessionStore = new MySQLSessionStore(mySQLConfig);
-  logger.debug('Session store created');
-}
-
 // Instantiate rotating log stream in production environment
 if (env === 'production') {
   logger.debug('Creating rotating filestream for access log');
@@ -91,23 +79,6 @@ const auth = require('./routes/auth.controller');
 logger.debug('Routes loaded');
 
 const app = express();
-
-
-// session in production environment
-if (env === 'production') {
-  logger.debug('Creating session handler');
-  app.use(session({
-    secret: config.secretKey,
-    name: 'porygon-api-sid',
-    resave: false,
-    saveUninitialized: true,
-    store: sessionStore,
-    cookie: {
-      maxAge: 3600000,
-    },
-  }));
-  logger.debug('Session handler created');
-}
 
 logger.debug('Initializing application');
 const router = express.Router();
@@ -164,16 +135,26 @@ app.use((req, res, next) => {
     logger.debug('Request is a login - authentication not required');
     next();
   } else {
-    // Check if cookie is still valid:
-    if (req.session !== undefined && req.session.cookie.maxAge > 0 && req.session.username !== undefined) {
-      logger.debug(`Session for user ${req.session.username} is valid for ${req.session.cookie.maxAge} seconds`);
-      logger.debug('Session is valid, continuying.');
-      next();
-    } else {
-      logger.debug('No Session provided.');
+    // Check the auth token
+    const authHeader = req.headers.authorization
+    if (!authHeader) {
+      logger.debug('No auth header provided')
       res.status(401).json({
         error: 'unauthorized',
       });
+    } else {
+      const token = authHeader.split(' ')[1];
+      logger.debug(`Provided a JSON token: ${token}`);
+      jwt.verify(token, config.secretKey, (err, user) => {
+        if (err) {
+          logger.debug('Token is not valid');
+          res.status(401).json({
+            error: 'unauthorized'
+          })
+        } else {
+          next();
+        }
+      }) 
     }
   }
 });

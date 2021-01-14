@@ -64,8 +64,7 @@ const login = (req, res, next) => {
   const { error, value } = loginSchema.validate(cleanup.removeNulls(req.body, true));
   if (error) next(error);
   else {
-    const onNext = (user) => {
-        req.session.username = value.login;
+    const onNext = (user, token) => {
         res.json(user);
     };
     const onError = () => {
@@ -88,18 +87,18 @@ const checkIsLoggedIn = (req, res) => {
   }
 }
 
-const logout = (req, res, next) => {
-  req.session.destroy((error) => {
-    if (error) {
-      res.status(500).json({
-        code: 500,
-        userMessage: 'Impossible to destroy user session',
-      });
-    } else {
-      res.status(200).send();
-    }
-  })
-}
+// const logout = (req, res, next) => {
+//   req.session.destroy((error) => {
+//     if (error) {
+//       res.status(500).json({
+//         code: 500,
+//         userMessage: 'Impossible to destroy user session',
+//       });
+//     } else {
+//       res.status(200).send();
+//     }
+//   })
+// }
 
 const getUserInfo = (req, res, next) => {
   const onNext = (data) => {
@@ -119,6 +118,6 @@ router.post('/user', createUser);
 router.get('/users/:username', getUserInfo);
 router.get('/login', checkIsLoggedIn);
 router.post('/login', login);
-router.get('/logout', logout);
+// router.get('/logout', logout);
 
 module.exports = router;
