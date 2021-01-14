@@ -42,16 +42,21 @@ describe('createUser', () => {
   });
 });
 
-
 describe('checkLogin', () => {
     it('is an observable', () => {
       expect(authService.checkLogin().subscribe).toBeDefined();
     });
   
     it('completes with user info when the correct password is passed', (done) => {
-      authService.checkLogin('test', 'toto', 0).subscribe(
+      authService.checkLogin('test', 'toto', 0, 'test_secret_key').subscribe(
         (result) => {
-          expect(result).toStrictEqual({'login': 'test', 'firstName': 'John', 'lastName': 'Doe', 'email': 'test@email.com'});
+          expect(result.login).toBe('test')
+          expect(result.firstName).toBe('John')
+          expect(result.lastName).toBe('Doe')
+          expect(result.email).toBe('test@email.com')
+          expect(result.password).not.toBeDefined()
+          expect(result.token).toMatch(/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.\w+\.\w+/)
+          done();
         },
         (error) => expect(error).not.toBeDefined(),
         () => done(),

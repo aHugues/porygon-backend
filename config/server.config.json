@@ -6,7 +6,7 @@
         "port": 4000,
         "version": 1,
         "frontendOrigin": "http://localhost:8080",
-        "logLevel": "info",
+        "logLevel": "debug",
         "logDirectory": "logs"
     },
     "doc": {

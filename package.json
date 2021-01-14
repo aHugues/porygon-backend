@@ -1,6 +1,6 @@
 {
   "name": "porygon-backend",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "REST API for the Porygon website",
   "private": true,
   "engines": {
@@ -25,12 +25,12 @@
     "body-parser": "^1.19.0",
     "db-migrate": "^0.11.11",
     "db-migrate-mysql": "^1.1.10",
+    "db-migrate-pg": "1.2.2",
     "debug": "~2.6.3",
     "express": "^4.17.1",
-    "express-mysql-session": "^2.1.5",
-    "express-session": "^1.17.1",
     "express-swaggerize-ui": "^1.1.0",
     "js-yaml": "^3.14.1",
+    "jsonwebtoken": "^8.5.1",
     "knex": "^0.19.5",
     "log4js": "^6.3.0",
     "morgan": "^1.10.0",

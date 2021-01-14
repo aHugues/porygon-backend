@@ -11,6 +11,7 @@ RUN npm run build \
     && rm -rf * \
     && mv /tmp/build .
 COPY docker_healthcheck .
+COPY createUser.js ./build/
 COPY migrations ./build/migrations/
 
 RUN mkdir /config \
