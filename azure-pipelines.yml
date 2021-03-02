@@ -10,7 +10,58 @@ pool:
 
 stages:
 - stage: build_test
-  displayName: 'Build and test'
+  displayName: 'Build and test (mysql)'
+  jobs:
+  - job: unit_test
+    displayName: 'Run unit tests'
+    strategy:
+      matrix:
+        node_10:
+          node_version: '10.x'
+        node_12:
+          node_version: '12.x'
+        node_13:
+          node_version: '13.x'
+      maxParallel: 3
+    steps:
+    - script: sudo service mysql start
+      displayName: 'Start mysql service'
+    - task: MysqlDeploymentOnMachineGroup@1
+      inputs:
+        TaskNameSelector: InlineSqlTask
+        SqlInline: |
+          CREATE DATABASE IF NOT EXISTS porygonTest;
+          use porygonTest;
+          CREATE USER 'azure'@'localhost' IDENTIFIED BY 'azure';
+          GRANT ALL PRIVILEGES ON porygonTest.* TO 'azure'@'localhost';
+        ServerName: localhost
+        SqlUsername: root
+        SqlPassword: root
+      displayName: 'Install database'
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(node_version)
+      displayName: 'Install Node.js'
+    - script: |
+        npm install
+        sudo npm install -g db-migrate
+        sudo npm install -g codecov@3.5
+      displayName: 'Install dependencies'
+    - script: |
+        cp .deploy/database.config.json config/database.config.json
+        db-migrate db:create --config config/database.config.json --env test porygonTest
+        db-migrate --config config/database.config.json --env test up
+      displayName: 'Run database migrations'
+    - script: npm test
+      displayName: 'Run unit tests'
+    - script: codecov
+      displayName: 'Upload Coverage'
+      condition: and(succeeded(), eq(variables['node_version'], '12.x'))
+      env:
+        CODECOV_TOKEN: $(CODECOV_TOKEN)
+
+- stage: build_test
+  displayName: 'Build and test (postgres)'
   jobs:
   - job: unit_test
     displayName: 'Run unit tests'

@@ -118,8 +118,8 @@ describe('getAllMovies', () => {
       (result) => expect(result).not.toBeDefined(),
       (error) => {
         expect(typeof error).toBe('object');
-        expect(error.name).toBe('Error');
-        expect(error.message).toContain('ER_BAD_FIELD_ERROR');
+        expect(error.name.toLowerCase()).toBe('error');
+        expect('ER_BAD_FIELD_ERROR' in error.message || error.message === '22P02').ToBeTruthful();
         done();
       },
     );
@@ -350,7 +350,7 @@ describe('updateMovie', () => {
       (result) => expect(result).toBe(true),
       (error) => {
         expect(typeof error).toBe('object');
-        expect(error.code).toBe('ER_BAD_FIELD_ERROR');
+        expect('ER_BAD_FIELD_ERROR' in error.code || error.code === '22P02').ToBeTruthful();
         expect(error.sqlMessage).toBe("Unknown column 'toto' in 'field list'");
         done();
       },
@@ -409,7 +409,7 @@ describe('deleteMovie', () => {
       (result) => expect(result).not.toBeDefined(),
       (error) => {
         expect(typeof error).toBe('object');
-        expect(error.name).toBe('Error');
+        expect(error.name.toLowerCase()).toBe('error');
         expect(error.message).toContain('Undefined binding(s) detected');
         done();
       },

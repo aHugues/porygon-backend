@@ -74,9 +74,9 @@ const getAllMovies = (query) => {
   }
 
   const observable = rxjs.Observable.create((obs) => {
-    knex('Movie').where(knex.raw('LOWER(`title`)'), 'like', searchArray[0][1])
-      .where(knex.raw('LOWER(`director`)'), 'like', searchArray[2][1])
-      .where(knex.raw('LOWER(`actors`)'), 'like', searchArray[3][1])
+    knex('Movie').where(knex.raw('LOWER("title")'), 'like', searchArray[0][1])
+      .where(knex.raw('LOWER("director")'), 'like', searchArray[2][1])
+      .where(knex.raw('LOWER("actors")'), 'like', searchArray[3][1])
       .where('year', 'like', searchArray[4][1])
       .where('location_id', 'like', searchArray[1][1])
       .orderBy(order[0], order[1], secondaryOrder[0], secondaryOrder[1])
@@ -296,7 +296,7 @@ const countMovies = (queryTitle) => {
   }
 
   const observable = rxjs.Observable.create((obs) => {
-    knex('Movie').where(knex.raw('LOWER(`title`)'), 'like', title).count('* as count')
+    knex('Movie').where(knex.raw('LOWER("title")'), 'like', title).count('* as count')
       .then((count) => {
         logger.debug(`Found ${count[0]} movies`);
         obs.next(count[0]);

@@ -45,8 +45,8 @@ exports.up = function (db, callback) {
         defaultValue: '',
       },
     }),
-    db.runSql.bind(db, 'ALTER TABLE `Serie` ADD CONSTRAINT `serie_location_fk`'
-    + 'FOREIGN KEY (`location_id`) REFERENCES `Location` (`id`) ON '
+    db.runSql.bind(db, 'ALTER TABLE "Serie" ADD CONSTRAINT "serie_location_fk"'
+    + 'FOREIGN KEY ("location_id") REFERENCES "Location" ("id") ON '
     + 'DELETE CASCADE ON UPDATE RESTRICT;'),
   ], callback);
 };

@@ -11,11 +11,17 @@
     "build-static": "mkdir build/views && cp -r views/* build/views && mkdir build/public && cp -r public/* build/public && mkdir build/doc && cp -r doc/* build/doc",
     "build": "npm run build-ts && npm run build-static",
     "start": "node ./bin/www.js",
-    "migrate:test": "db-migrate --config config/database.config.json --env test up",
-    "migrate:reset": "db-migrate --config config/database.config.json --env test reset",
-    "migrate:init": "mysql -u azure -pazure porygonTest < .deploy/populateDatabase.sql",
-    "pretest": "npm run migrate:reset && npm run migrate:test && npm run migrate:init",
-    "test": "NODE_ENV=test LOG_LEVEL=debug jest --detectOpenHandles --testTimeout=10000"
+    "migrate:test-mysql": "db-migrate --config config/database.config.json --env test-mysql up",
+    "migrate:test-psql": "db-migrate --config config/database.config.json --env test-psql up",
+    "migrate:reset-mysql": "db-migrate --config config/database.config.json --env test-mysql reset",
+    "migrate:reset-psql": "db-migrate --config config/database.config.json --env test-psql reset",
+    "migrate:init-mysql": "mysql -u azure -pazure porygonTest < .deploy/populateDatabaseMysql.sql",
+    "migrate:init-psql": "psql -U azure porygontest -f .deploy/populateDatabasePg.sql",
+    "pretest-mysql": "npm run migrate:reset-mysql && npm run migrate:test-mysql && npm run migrate:init-mysql",
+    "pretest-psql": "npm run migrate:reset-psql && npm run migrate:test-psql && npm run migrate:init-psql",
+    "test-psql": "NODE_ENV=test LOG_LEVEL=debug jest --detectOpenHandles --testTimeout=1000",
+    "pretest": "npm run pretest-mysql",
+    "test": "NODE_ENV=test LOG_LEVEL=debug jest --detectOpenHandles --testTimeout=1000"
   },
   "dependencies": {
     "@hapi/joi": "^17.1.1",

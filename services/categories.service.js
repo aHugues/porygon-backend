@@ -41,7 +41,7 @@ const getAllCategories = (query) => {
   }
 
   const observable = rxjs.Observable.create((obs) => {
-    knex('Category').where(knex.raw('LOWER(`label`)'), 'like', labelSearch).orderBy(order[0], order[1]).select(attributes)
+    knex('Category').where(knex.raw('LOWER("label")'), 'like', labelSearch).orderBy(order[0], order[1]).select(attributes)
       .then((categories) => {
         logger.debug(`Found categories ${JSON.stringify(categories)}`);
         obs.next(categories);
